@@ -3,11 +3,14 @@ import json
 import random
 import traceback
 import re
+import shutil
+import threading
+import time
+import itertools
 from collections import defaultdict
-from datetime import datetime
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from datetime import datetime, timedelta
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_file
 from google import genai
-from flask import send_file
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 import io
@@ -285,7 +288,7 @@ def index():
         if is_owner:
             cursor.execute("SELECT SUM(sd.Quantity * p.PurchasePrice) FROM SalesDetails sd INNER JOIN Products p ON sd.ProductID = p.ProductID")
         else:
-            cursor.execute("SELECT SUM(sd.Quantity * p.PurchasePrice) FROM SalesDetails sd INNER JOIN Products p ON sd.ProductID = p.ProductID INNER JOIN SalesOrders o ON sd.SaleID = o.SaleID WHERE o.Branch = %s", (user_branch,))
+            cursor.execute("SELECT SUM(sd.Quantity * p.PurchasePrice) FROM (SalesDetails sd INNER JOIN Products p ON sd.ProductID = p.ProductID) INNER JOIN SalesOrders o ON sd.SaleID = o.SaleID WHERE o.Branch = %s", (user_branch,))
         cogs_val = cursor.fetchone()
         total_cogs = float(cogs_val[0] if cogs_val and cogs_val[0] else 0.0)
 
@@ -781,16 +784,16 @@ def api_get_movements():
         movements = []
 
         if is_owner:
-            cursor.execute("SELECT TOP 50 o.PurchaseDate, p.ProductCode, d.Quantity, o.InvoiceNo FROM PurchaseDetails d INNER JOIN PurchaseOrders o ON d.PurchaseID = o.PurchaseID INNER JOIN Products p ON d.ProductID = p.ProductID ORDER BY o.PurchaseDate DESC")
+            cursor.execute("SELECT TOP 50 o.PurchaseDate, p.ProductCode, d.Quantity, o.InvoiceNo FROM (PurchaseDetails d INNER JOIN PurchaseOrders o ON d.PurchaseID = o.PurchaseID) INNER JOIN Products p ON d.ProductID = p.ProductID ORDER BY o.PurchaseDate DESC")
         else:
-            cursor.execute("SELECT TOP 50 o.PurchaseDate, p.ProductCode, d.Quantity, o.InvoiceNo FROM PurchaseDetails d INNER JOIN PurchaseOrders o ON d.PurchaseID = o.PurchaseID INNER JOIN Products p ON d.ProductID = p.ProductID WHERE o.Branch = %s ORDER BY o.PurchaseDate DESC", (branch,))
+            cursor.execute("SELECT TOP 50 o.PurchaseDate, p.ProductCode, d.Quantity, o.InvoiceNo FROM (PurchaseDetails d INNER JOIN PurchaseOrders o ON d.PurchaseID = o.PurchaseID) INNER JOIN Products p ON d.ProductID = p.ProductID WHERE o.Branch = %s ORDER BY o.PurchaseDate DESC", (branch,))
         for r in cursor.fetchall():
             movements.append({"date": r[0].strftime('%Y-%m-%d %H:%M') if r[0] else 'N/A', "code": r[1], "type": "IN", "qty": float(r[2]), "ref": r[3]})
 
         if is_owner:
-            cursor.execute("SELECT TOP 50 o.SaleDate, p.ProductCode, d.Quantity, o.InvoiceNo FROM SalesDetails d INNER JOIN SalesOrders o ON d.SaleID = o.SaleID INNER JOIN Products p ON d.ProductID = p.ProductID ORDER BY o.SaleDate DESC")
+            cursor.execute("SELECT TOP 50 o.SaleDate, p.ProductCode, d.Quantity, o.InvoiceNo FROM (SalesDetails d INNER JOIN SalesOrders o ON d.SaleID = o.SaleID) INNER JOIN Products p ON d.ProductID = p.ProductID ORDER BY o.SaleDate DESC")
         else:
-            cursor.execute("SELECT TOP 50 o.SaleDate, p.ProductCode, d.Quantity, o.InvoiceNo FROM SalesDetails d INNER JOIN SalesOrders o ON d.SaleID = o.SaleID INNER JOIN Products p ON d.ProductID = p.ProductID WHERE o.Branch = %s ORDER BY o.SaleDate DESC", (branch,))
+            cursor.execute("SELECT TOP 50 o.SaleDate, p.ProductCode, d.Quantity, o.InvoiceNo FROM (SalesDetails d INNER JOIN SalesOrders o ON d.SaleID = o.SaleID) INNER JOIN Products p ON d.ProductID = p.ProductID WHERE o.Branch = %s ORDER BY o.SaleDate DESC", (branch,))
         for r in cursor.fetchall():
             movements.append({"date": r[0].strftime('%Y-%m-%d %H:%M') if r[0] else 'N/A', "code": r[1], "type": "OUT", "qty": float(r[2]), "ref": r[3]})
 
@@ -801,6 +804,153 @@ def api_get_movements():
     finally:
         if conn: conn.close()
 
+
+@app.route('/api/create-contract', methods=['POST'])
+def api_create_contract():
+    if not session.get('logged_in'): return jsonify({"success": False}), 401
+    data = request.get_json()
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO Contracts (CustomerCode, ProductCode, AgreedQty, FixedRate, FulfillmentStatus, CreatedAt) 
+            VALUES (%s, %s, %s, %s, 'Active', %s)
+        """, (data.get('customer_code'), data.get('product_code'), float(data.get('qty', 0)),
+              float(data.get('rate', 0)), datetime.now()))
+        conn.commit()
+        return jsonify({"success": True, "message": "Contract drafted successfully."})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)})
+    finally:
+        if conn: conn.close()
+
+@app.route('/api/get-contracts', methods=['GET'])
+def api_get_contracts():
+    if not session.get('logged_in'): return jsonify({"success": False}), 401
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT c.ContractID, cust.CustomerName, p.ProductName, c.AgreedQty, c.FixedRate, c.FulfillmentStatus 
+            FROM (Contracts c 
+            LEFT JOIN Customers cust ON c.CustomerCode = cust.CustomerCode)
+            LEFT JOIN Products p ON c.ProductCode = p.ProductCode
+            ORDER BY c.ContractID DESC
+        """)
+        contracts = []
+        for r in cursor.fetchall():
+            contracts.append({
+                "id": f"CON-{r[0]}",
+                "customer": r[1] or "Unknown",
+                "product": r[2] or "Unknown",
+                "qty": float(r[3] or 0),
+                "rate": float(r[4] or 0),
+                "status": r[5] or "Active"
+            })
+        return jsonify({"success": True, "contracts": contracts})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)})
+    finally:
+        if conn: conn.close()
+
+
+# --- UTILITY ROUTES ---
+@app.route('/api/customer-debt', methods=['GET'])
+def api_customer_debt():
+    code = request.args.get('code')
+    if not code: return jsonify({"success": False, "debt": 0})
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT SUM(o.TotalAmount) FROM SalesOrders o INNER JOIN Customers c ON o.CustomerID = c.CustomerID WHERE c.CustomerCode = %s AND o.PaymentStatus = 'Pending'", (code,))
+        row = cursor.fetchone()
+        return jsonify({"success": True, "debt": float(row[0] if row and row[0] else 0.0)})
+    except Exception:
+        return jsonify({"success": False, "debt": 0})
+    finally:
+        if conn: conn.close()
+
+@app.route('/api/pending-sales', methods=['GET'])
+def api_pending_sales():
+    if not session.get('logged_in'): return jsonify({"success": False}), 401
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT o.SaleID, o.InvoiceNo, c.CustomerName, c.Phone, o.TotalAmount, o.SaleDate, o.PaymentMethod, c.CustomerCode, o.FulfillmentMode FROM SalesOrders o INNER JOIN Customers c ON o.CustomerID = c.CustomerID WHERE o.PaymentStatus = 'Pending' ORDER BY o.SaleDate ASC")
+        orders = []
+        for row in cursor.fetchall():
+            sale_id = row[0]
+            orders.append({
+                "id": sale_id, "invoice_no": row[1] or "", "customer_name": row[2] or "Unknown", "phone": row[3] or "",
+                "total": float(row[4] if row[4] else 0.0),
+                "date": row[5].strftime('%Y-%m-%d %H:%M') if row[5] else 'N/A',
+                "method": row[6] or "Pending", "customer_code": row[7] or "", "fulfillment_mode": row[8] or "Takeaway"
+            })
+        return jsonify({"success": True, "orders": orders})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)})
+    finally:
+        if conn: conn.close()
+
+@app.route('/api/settle-sale', methods=['POST'])
+def api_settle_sale():
+    if not session.get('logged_in'): return jsonify({"success": False}), 401
+    data = request.get_json()
+    order_id, method, split_payments = int(data.get('order_id')), data.get('method', 'Cash'), data.get('split_payments')
+    now = datetime.now()
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT TotalAmount FROM SalesOrders WHERE SaleID = %s", (order_id,))
+        row = cursor.fetchone()
+        if not row: return jsonify({"success": False, "message": "Order not found"})
+        total = float(row[0] if row[0] else 0.0)
+
+        cursor.execute("UPDATE SalesOrders SET PaymentStatus = 'Paid', PaymentMethod = %s WHERE SaleID = %s", (method, order_id))
+        cursor.execute("SELECT PaymentID FROM Payments WHERE SaleID = %s", (order_id,))
+        if not cursor.fetchone():
+            if split_payments:
+                for sp in split_payments: cursor.execute("INSERT INTO Payments (SaleID, PaymentDate, Amount, Method) VALUES (%s, %s, %s, %s)", (order_id, now, sp['amount'], sp['method']))
+            else:
+                cursor.execute("INSERT INTO Payments (SaleID, PaymentDate, Amount, Method) VALUES (%s, %s, %s, %s)", (order_id, now, total, method))
+        conn.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        if conn:
+            try: conn.rollback()
+            except: pass
+        return jsonify({"success": False, "message": str(e)})
+    finally:
+        if conn: conn.close()
+
+@app.route('/search-customer-hub')
+def search_customer_hub():
+    query = request.args.get('query', '')
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT CustomerCode, CustomerName, Phone, Email, Address, AreaID FROM Customers WHERE CustomerCode = %s OR Phone = %s OR CustomerName LIKE %s", (query, query, f"%{query}%"))
+        return jsonify({"success": True, "results": [{"code": r[0], "name": r[1], "phone": r[2] or "", "email": r[3] or "", "address": r[4] or "", "area_id": r[5]} for r in cursor.fetchall()]})
+    finally:
+        if conn: conn.close()
+
+@app.route('/search-seller-hub')
+def search_seller_hub():
+    query = request.args.get('query', '')
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT SupplierCode, SupplierName, Phone, Address FROM Suppliers WHERE SupplierCode = %s OR Phone = %s OR SupplierName LIKE %s", (query, query, f"%{query}%"))
+        return jsonify({"success": True, "results": [{"code": r[0], "name": r[1], "phone": r[2] or "", "address": r[3] or ""} for r in cursor.fetchall()]})
+    finally:
+        if conn: conn.close()
 
 @app.route('/create-customer', methods=['POST'])
 def create_customer():
@@ -1082,6 +1232,7 @@ def bulk_delete_orders():
     finally:
         if conn: conn.close()
 
+
 # --- REPORT ENGINE MODULES ---
 @app.route('/api/daily-stock-summary')
 def api_daily_stock_summary():
@@ -1096,11 +1247,11 @@ def api_daily_stock_summary():
             summary_dict[row[0]] = {"code": row[0], "name": row[1], "sold": 0.0, "purchased": 0.0, "current": float(row[2] or 0)}
         today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
-        cursor.execute("SELECT p.ProductCode, d.Quantity FROM SalesDetails d INNER JOIN Products p ON d.ProductID = p.ProductID INNER JOIN SalesOrders o ON d.SaleID = o.SaleID WHERE o.SaleDate >= %s", (today_start,))
+        cursor.execute("SELECT p.ProductCode, d.Quantity FROM (SalesDetails d INNER JOIN Products p ON d.ProductID = p.ProductID) INNER JOIN SalesOrders o ON d.SaleID = o.SaleID WHERE o.SaleDate >= %s", (today_start,))
         for r in cursor.fetchall():
             if r[0] in summary_dict: summary_dict[r[0]]["sold"] += float(r[1] or 0)
 
-        cursor.execute("SELECT p.ProductCode, d.Quantity FROM PurchaseDetails d INNER JOIN Products p ON d.ProductID = p.ProductID INNER JOIN PurchaseOrders o ON d.PurchaseID = o.PurchaseID WHERE o.PurchaseDate >= %s", (today_start,))
+        cursor.execute("SELECT p.ProductCode, d.Quantity FROM (PurchaseDetails d INNER JOIN Products p ON d.ProductID = p.ProductID) INNER JOIN PurchaseOrders o ON d.PurchaseID = o.PurchaseID WHERE o.PurchaseDate >= %s", (today_start,))
         for r in cursor.fetchall():
             if r[0] in summary_dict: summary_dict[r[0]]["purchased"] += float(r[1] or 0)
 
@@ -1186,6 +1337,7 @@ def api_action_approval():
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if conn: conn.close()
+
 
 # =========================================================================================
 # --- ADVANCED AI MASTER CONFIGURATION & FAILOVER SYSTEM ---
