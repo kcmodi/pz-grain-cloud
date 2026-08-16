@@ -3,3 +3,4 @@ psycopg2-binary==2.9.9
 reportlab==4.0.8
 waitress==2.1.2
 google-genai==0.3.0
+gunicorn==21.2.0
