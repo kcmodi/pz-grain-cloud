@@ -1,0 +1,58 @@
+<!-- WORKSPACE: ERP MASTER PAYMENT LEDGER -->
+<div id="menu-workspace-erp-payments" class="flex-1 p-4 md:p-8 overflow-y-auto hidden workspace-pane bg-pzdark flex-col gap-6 custom-scrollbar animate-page-fade">
+    <div class="max-w-7xl mx-auto w-full space-y-6">
+        
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-white/[0.08] pb-4 gap-4">
+            <div>
+                <h2 class="text-2xl sm:text-3xl font-black text-white uppercase tracking-widest drop-shadow-md">Master Payment Ledger</h2>
+                <p class="text-xs font-medium text-slate-400 mt-1 tracking-wider">Chronological tracking of inbound settlements, payouts, and cash flow</p>
+            </div>
+            <div class="text-[10px] sm:text-xs font-bold text-amber-500 bg-amber-500/10 px-4 py-2 rounded-xl border border-amber-500/20 flex items-center gap-3 backdrop-blur-md">
+                <span class="uppercase tracking-widest">Real-time Financial Stream</span>
+            </div>
+        </div>
+
+        <!-- Payments Ledger Table -->
+        <div class="bg-pzpanel border border-white/[0.05] rounded-2xl overflow-hidden shadow-lg animate-slide-up">
+            <div class="px-6 py-5 border-b border-white/[0.05] bg-white/[0.02]">
+                <h3 class="text-sm font-black text-white uppercase tracking-widest">Transaction Journal</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead class="text-[10px] text-slate-500 bg-pzdark uppercase tracking-widest font-black">
+                        <tr>
+                            <th class="p-4 pl-6">Timestamp</th>
+                            <th class="p-4">Reference ID</th>
+                            <th class="p-4">Flow Type</th>
+                            <th class="p-4">Method</th>
+                            <th class="p-4 text-right pr-6">Amount Settled</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/[0.05]">
+                        {% for p in payments %}
+                        <tr class="hover:bg-white/[0.02] transition-colors">
+                            <td class="p-4 pl-6 font-mono text-xs text-slate-400">{{ p.date }}</td>
+                            <td class="p-4 font-mono font-black text-white">{{ p.ref }}</td>
+                            <td class="p-4">
+                                <span class="px-2.5 py-1 rounded text-[10px] uppercase font-black border {% if p.flow == 'IN' %}bg-emerald-500/10 text-emerald-400 border-emerald-500/20{% else %}bg-rose-500/10 text-rose-400 border-rose-500/20{% endif %}">
+                                    {{ p.flow }}
+                                </span>
+                            </td>
+                            <td class="p-4 font-bold text-slate-300">{{ p.method }}</td>
+                            <td class="p-4 font-mono font-black text-right pr-6 {% if p.flow == 'IN' %}text-emerald-400{% else %}text-rose-400{% endif %}">
+                                {% if p.flow == 'IN' %}+{% else %}-{% endif %}₹{{ "{:,.2f}".format(p.amount) }}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="p-8 text-center text-slate-500 text-xs font-bold uppercase tracking-widest">No payment transactions recorded in the ledger.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>

@@ -31,15 +31,15 @@
         html:not(.dark) .bg-pzpanel { background-color: #e5e7eb !important; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1) !important; border-color: #9ca3af !important; }
         html:not(.dark) .text-white, html:not(.dark) .text-slate-100, html:not(.dark) .text-slate-200 { color: #111827 !important; }
         html:not(.dark) .text-slate-300, html:not(.dark) .text-slate-400, html:not(.dark) .text-slate-500 { color: #374151 !important; }
-        html:not(.dark) .border-white/5, html:not(.dark) .border-white/[0.05], html:not(.dark) .border-white/[0.06], html:not(.dark) .border-white/[0.08], html:not(.dark) .border-white/10 { border-color: #9ca3af !important; }
-        html:not(.dark) .bg-[#1b2020] { background-color: #d1d5db !important; border-color: #9ca3af !important; color: #111827 !important; }
+        html:not(.dark) .border-white\/5, html:not(.dark) .border-white\/\[0\.05\], html:not(.dark) .border-white\/\[0\.06\], html:not(.dark) .border-white\/\[0\.08\], html:not(.dark) .border-white\/10 { border-color: #9ca3af !important; }
+        html:not(.dark) .bg-\[\#1b2020\] { background-color: #d1d5db !important; border-color: #9ca3af !important; color: #111827 !important; }
         html:not(.dark) input, html:not(.dark) select { background-color: #f3f4f6 !important; color: #111827 !important; border-color: #9ca3af !important; }
         html:not(.dark) .bg-gradient-to-r.from-slate-900 { background: #e5e7eb !important; border-bottom: 2px solid #9ca3af !important; }
-        html:not(.dark) .bg-pzdark/95 { background-color: rgba(209, 213, 219, 0.95) !important; border-color: #9ca3af !important; }
+        html:not(.dark) .bg-pzdark\/95 { background-color: rgba(209, 213, 219, 0.95) !important; border-color: #9ca3af !important; }
         html:not(.dark) .hover\:bg-white\/\[0\.02\]:hover, html:not(.dark) .hover\:bg-white\/\[0\.04\]:hover, html:not(.dark) .hover\:bg-white\/5:hover { background-color: #9ca3af !important; color: #111827 !important; }
     </style>
 </head>
-<body class="bg-pzdark text-slate-100 font-sans h-[100dvh] flex flex-col overflow-hidden antialiased selection:bg-blue-500/20 selection:text-blue-200 transition-colors duration-200" onload="initSystem()">
+<body class="bg-pzdark text-slate-100 font-sans h-[100dvh] flex flex-col overflow-hidden antialiased selection:bg-amber-500/20 selection:text-amber-200 transition-colors duration-200" onload="initSystem()">
 
     <div id="low-stock-banner" class="z-50 relative"></div>
 
@@ -791,8 +791,7 @@
 
         function loadPurchaseDataForEditing() {
             try {
-                let pid = document.getElementById('editpur-target-id').value; if(!pid) return alert("Purchase details missing.");
-                let pur = historicalPurchases[pid]; if(!pur) return alert("Purchase details missing.");
+                let pid = document.getElementById('editpur-target-id').value; if(!pid) return; let pur = historicalPurchases[pid]; if(!pur) return alert("Purchase details missing.");
                 let elCode = document.getElementById('editpur-seller-code'); if(elCode) elCode.value = pur.seller_code ? pur.seller_code : ''; let elName = document.getElementById('editpur-seller-name'); if(elName) elName.value = pur.seller_name ? pur.seller_name : ''; let elPhone = document.getElementById('editpur-seller-phone'); if(elPhone) elPhone.value = pur.seller_phone ? pur.seller_phone : ''; 
                 
                 let addrParts = (pur.seller_address ? pur.seller_address : '').split(',').map(s => s.trim());
@@ -813,7 +812,7 @@
             let items = Object.values(editPurchaseManifest); let total = items.reduce((s, i) => s + (i.qty * i.price), 0); let brokerName = document.getElementById('editpur-broker-name') ? document.getElementById('editpur-broker-name').value : '';
             
             let addr = extractAddressFields('editpur-seller');
-            let payload = { purchase_id: pid, seller_name: document.getElementById('editpur-seller-name').value, seller_phone: document.getElementById('editpur-seller-phone').value, seller_apt: addr.apt, seller_area: addr.area, seller_city: addr.city, seller_state: addr.state, seller_zipcode: addr.zipcode, items: items, total: total, broker_name: brokerName };
+            let payload = { purchase_id: pid, seller_name: document.getElementById('editpur-seller-name').value, seller_phone: document.getElementById('editpur-seller-phone').value, apt: addr.apt, area: addr.area, city: addr.city, state: addr.state, zipcode: addr.zipcode, items: items, total: total, broker_name: brokerName };
             try { let r = await fetch('/edit-purchase', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) }); let d = await r.json(); if (d.success) { alert("✅ Purchase Updated"); window.location.reload(); } else { alert("❌ Failed: " + d.message); } } catch(e) { alert("Error connecting to server."); }
         }
 
@@ -1015,7 +1014,7 @@
             const statusText = document.getElementById('voice-status-text');
             const micIcon = document.getElementById('mic-icon');
             
-            if(micBtn) micBtn.className = "bg-white/5 hover:bg-white/10 border border-white/10 text-blue-400 font-black px-4 py-3 rounded-2xl text-sm transition-all shadow-md active:scale-95 shrink-0 flex items-center justify-center gap-1";
+            if(micBtn) micBtn.className = "bg-white/5 hover:bg-white/10 border border-white/10 text-amber-400 font-black px-4 py-3 rounded-2xl text-sm transition-all shadow-md active:scale-95 shrink-0 flex items-center justify-center gap-1";
             if(micIcon) micIcon.innerText = "🎤";
             if(statusText) statusText.innerText = "Voice Ready";
         }

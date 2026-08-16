@@ -1,0 +1,85 @@
+<!-- WORKSPACE 9: EDIT INBOUND PURCHASE -->
+<div id="menu-workspace-editpurchase" class="flex-1 p-3 md:p-4 overflow-y-auto lg:overflow-hidden hidden workspace-pane bg-pzdark print:hidden flex-col lg:flex-row gap-4 relative z-10 custom-scrollbar">
+    <div class="w-full lg:w-2/3 flex flex-col gap-4 lg:overflow-y-auto custom-scrollbar">
+        
+        <!-- Select Purchase Record Box -->
+        <div class="bg-gradient-to-r from-slate-900 via-pzpanel to-slate-900 text-white p-4 rounded-xl flex flex-col md:flex-row gap-3 items-end shadow-md border-2 border-white/[0.06] relative z-30">
+            <div class="flex-1 w-full space-y-2">
+                <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Select Purchase Record</label>
+                <select id="editpur-target-id" class="w-full bg-pzdark border-2 border-white/[0.08] rounded-lg p-2 text-xs font-bold text-white cursor-pointer h-8 outline-none focus:border-amber-500">
+                    <option value="">-- Choose purchase to correct --</option>
+                    {% for p in purchases %}
+                        <option value="{{ p.id }}">Bill: {{ p.invoice_no }} | ID #{{ p.id }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="button" onclick="loadPurchaseDataForEditing()" class="w-full md:w-auto bg-amber-500 hover:bg-amber-400 text-pzdark font-black text-[10px] uppercase px-6 py-2 rounded-lg active:scale-95 h-8 transition-all">Load Details</button>
+        </div>
+
+        <!-- Supplier Invoice Info Fields -->
+        <div class="bg-pzpanel p-4 rounded-xl border-2 border-white/[0.06] shadow-md space-y-3 relative z-20">
+            <h3 class="text-[11px] font-black uppercase border-b-2 border-white/5 pb-2 text-white">Supplier Invoice Info</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="col-span-1">
+                    <label class="block text-[9px] uppercase mb-0.5 text-slate-400">Code</label>
+                    <input type="text" id="editpur-seller-code" readonly class="w-full bg-[#1b2020] border-2 border-white/[0.08] rounded-lg px-2 py-1.5 text-xs font-mono font-black h-8 text-amber-500">
+                </div>
+                <div class="col-span-1 sm:col-span-2">
+                    <label class="block text-[9px] uppercase mb-0.5 text-slate-400">Name</label>
+                    <input type="text" id="editpur-seller-name" class="w-full bg-[#1b2020] border-2 border-white/[0.08] rounded-lg px-2 py-1.5 text-xs font-bold h-8 text-white outline-none focus:border-amber-500">
+                </div>
+                <div class="col-span-2 sm:col-span-1">
+                    <label class="block text-[9px] uppercase mb-0.5 text-slate-400">Phone</label>
+                    <input type="text" id="editpur-seller-phone" class="w-full bg-[#1b2020] border-2 border-white/[0.08] rounded-lg px-2 py-1.5 text-xs font-mono font-bold h-8 text-white outline-none focus:border-amber-500">
+                </div>
+                <div class="col-span-2 sm:col-span-4">
+                    <label class="block text-[9px] uppercase mb-0.5 text-slate-400">Address</label>
+                    <input type="text" id="editpur-seller-address" class="w-full bg-[#1b2020] border-2 border-white/[0.08] rounded-lg px-2 py-1.5 text-xs font-bold h-8 text-white outline-none focus:border-amber-500">
+                </div>
+            </div>
+        </div>
+
+        <!-- Append Item to Purchase -->
+        <div class="bg-pzpanel p-4 rounded-xl border-2 border-white/[0.06] shadow-md space-y-3 relative z-10">
+            <h3 class="text-[11px] font-black text-amber-500 uppercase border-b-2 border-white/5 pb-2">Append Item to Purchase</h3>
+            <div class="flex flex-col md:flex-row items-start gap-3">
+                <div class="w-full md:w-1/4">
+                    <label class="block text-[10px] font-extrabold uppercase mb-1 text-slate-400">Code</label>
+                    <input type="text" id="editpur-terminal-code" maxlength="3" oninput="checkGrainCode(this.value, 'editpurchase')" placeholder="Code" class="w-full bg-pzdark border-2 border-white/[0.08] rounded-lg p-2 text-center text-lg h-10 outline-none text-white">
+                </div>
+                <div class="w-full md:flex-1">
+                    <label class="block text-[10px] font-extrabold uppercase mb-1 text-slate-400">Preview</label>
+                    <div id="editpur-item-preview-box" class="h-10 flex items-center bg-pzdark border-2 border-dashed border-white/[0.08] rounded-lg px-3 text-xs font-bold text-slate-400">Waiting...</div>
+                </div>
+                <div class="w-full md:w-1/4">
+                    <label class="block text-[10px] font-extrabold uppercase mb-1 text-slate-400">Qty (kg)</label>
+                    <input type="number" id="editpur-terminal-qty" value="100" disabled class="w-full bg-[#1b2020] border-2 border-white/[0.04] rounded-lg p-2 text-center text-lg font-black text-slate-500 h-10 outline-none">
+                </div>
+            </div>
+            <div class="flex justify-end pt-1">
+                <button type="button" id="editpur-add-to-manifest-btn" onclick="processTerminalEntry('editpurchase')" disabled class="w-full md:w-auto bg-[#1b2020] text-slate-500 font-black py-2 px-6 rounded-lg text-xs uppercase cursor-not-allowed h-10">Add To Bill</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT SIDEBAR: ADJUSTED PURCHASE BILL & SAVING -->
+    <div class="w-full lg:w-1/3 bg-pzpanel lg:border-t-0 lg:border-l-4 border-white/[0.06] shadow-2xl flex flex-col relative z-10 shrink-0 lg:h-full lg:overflow-hidden min-h-[500px] lg:min-h-0">
+        <div class="flex flex-col flex-1 min-h-0 overflow-hidden">
+            <div class="p-3 sm:p-4 pb-2 shrink-0 border-b-2 border-white/5 mx-3 sm:mx-4 mt-3">
+                <h2 class="text-sm font-black text-white uppercase tracking-widest">Adjusted Purchase Bill</h2>
+            </div>
+            <div id="editpur-manifest-container" class="flex-1 overflow-y-auto px-3 sm:px-4 py-2 space-y-2 min-h-[80px] custom-scrollbar">
+                <p class="text-xs text-center py-10 font-bold text-slate-400">Please load a purchase record...</p>
+            </div>
+        </div>
+        <div class="shrink-0 flex flex-col bg-pzdark border-t-2 border-white/5">
+            <div class="p-3 sm:p-4 pt-3 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] z-20">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-xs font-black uppercase tracking-widest text-slate-400">Adjusted Total</span>
+                    <span id="editpur-total-price" class="text-2xl font-black text-amber-500">₹0.00</span>
+                </div>
+                <button type="button" onclick="submitModifiedPurchase()" class="w-full bg-amber-500 hover:bg-amber-400 text-pzdark font-black py-3 px-4 rounded-xl text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all h-12 border shrink-0 border-transparent">Save Purchase Overwrites</button>
+            </div>
+        </div>
+    </div>
+</div>

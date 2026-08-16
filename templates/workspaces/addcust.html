@@ -1,0 +1,82 @@
+<!-- WORKSPACE: CLIENT REGISTRATION (CRM) -->
+<div id="menu-workspace-addcust" class="flex-1 p-4 md:p-8 overflow-y-auto hidden workspace-pane bg-pzdark flex-col gap-6 custom-scrollbar animate-page-fade">
+    <div class="max-w-4xl mx-auto w-full">
+        
+        <div class="bg-pzpanel border-2 border-white/[0.06] rounded-3xl p-6 shadow-xl relative z-20 mb-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b-2 border-white/5 pb-4">
+                <h2 class="text-xl font-black text-white tracking-wider flex items-center gap-3">
+                    <span class="p-2 bg-indigo-500/20 text-indigo-400 rounded-xl">👥</span> 
+                    Client Directory Hub
+                </h2>
+                <div class="relative w-full md:w-72">
+                    <input type="text" id="hub-search-input" oninput="executeLiveCustomerHubSearch(this.value)" placeholder="Search Name, Phone, or Code..." class="bg-[#1b2020] border-2 border-white/[0.08] rounded-xl px-4 py-2.5 text-xs font-bold outline-none w-full focus:border-indigo-500 transition-colors shadow-inner text-white">
+                </div>
+            </div>
+            
+            <div id="hub-search-results" class="space-y-2 mt-2">
+                <p class="text-[10px] text-center py-10 font-bold text-slate-400">Search for a client to edit, or use the form below to register a new profile.</p>
+            </div>
+        </div>
+
+        <div class="bg-pzpanel border-2 border-white/[0.06] rounded-3xl p-6 shadow-xl relative z-10">
+            <div class="flex justify-between items-center mb-6 border-b-2 border-white/5 pb-4">
+                <h3 id="hub-form-title" class="text-sm font-black text-indigo-400 uppercase tracking-widest">➕ Register New Profile</h3>
+                <button type="button" onclick="window.location.reload()" class="text-[10px] text-slate-500 hover:text-white uppercase font-bold tracking-widest transition-colors">Clear Form ✕</button>
+            </div>
+
+            <input type="hidden" id="hub-edit-mode-code" value="">
+
+            <div class="space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1.5 ml-1">Full Name / Firm</label>
+                        <input type="text" id="new-cust-name" placeholder="Enter name..." class="w-full bg-[#1b2020] border-2 border-white/[0.08] rounded-xl px-4 py-3 text-sm font-bold text-white outline-none focus:border-indigo-500 transition-colors">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1.5 ml-1">Primary Phone</label>
+                        <input type="text" id="new-cust-phone" placeholder="+91..." class="w-full bg-[#1b2020] border-2 border-white/[0.08] rounded-xl px-4 py-3 text-sm font-mono font-bold text-white outline-none focus:border-indigo-500 transition-colors">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-slate-400 uppercase mb-1.5 ml-1">Email (Optional)</label>
+                        <input type="email" id="new-cust-email" placeholder="client@email.com" class="w-full bg-[#1b2020] border-2 border-white/[0.08] rounded-xl px-4 py-3 text-sm font-bold text-white outline-none focus:border-indigo-500 transition-colors">
+                    </div>
+                </div>
+
+                <!-- NEW 5-PART ADDRESS BLOCK FOR CRM -->
+                <div class="border-t-2 border-white/5 pt-5 mt-2">
+                    <label class="block text-[10px] font-extrabold text-indigo-400 uppercase mb-3 ml-1">Location Details</label>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+                        <div class="col-span-2 md:col-span-1">
+                            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Apt / Society</label>
+                            <input type="text" id="new-cust-apt" placeholder="Shop 5" class="w-full bg-[#1b2020] border-2 border-white/[0.08] rounded-lg px-3 py-2 text-xs font-bold text-white outline-none focus:border-indigo-500 transition-colors">
+                        </div>
+                        <div class="col-span-2 md:col-span-1">
+                            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Area</label>
+                            <input type="text" id="new-cust-area" placeholder="Navrangpura" oninput="autoFillLocation('new-cust')" class="w-full bg-[#1b2020] border-2 border-white/[0.08] rounded-lg px-3 py-2 text-xs font-bold text-white outline-none focus:border-indigo-500 transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">City</label>
+                            <input type="text" id="new-cust-city" placeholder="Ahmedabad" class="w-full bg-[#1b2020] border-2 border-white/[0.08] rounded-lg px-3 py-2 text-xs font-bold text-white outline-none focus:border-indigo-500 transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">State</label>
+                            <input type="text" id="new-cust-state" placeholder="GJ" class="w-full bg-[#1b2020] border-2 border-white/[0.08] rounded-lg px-3 py-2 text-xs font-bold text-white outline-none focus:border-indigo-500 transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1 ml-1">Zipcode</label>
+                            <input type="text" id="new-cust-zipcode" placeholder="380009" class="w-full bg-[#1b2020] border-2 border-white/[0.08] rounded-lg px-3 py-2 text-xs font-bold text-white outline-none focus:border-indigo-500 transition-colors">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t-2 border-white/5 flex justify-end gap-3">
+                    <button type="button" onclick="deleteCustomerProfile(document.getElementById('hub-edit-mode-code').value)" class="bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/30 px-5 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-colors shadow-sm">🗑️ Delete</button>
+                    <button type="button" id="hub-form-btn" onclick="submitStandaloneCustomer()" class="bg-indigo-500 hover:bg-indigo-400 text-white px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95">Save to Directory</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

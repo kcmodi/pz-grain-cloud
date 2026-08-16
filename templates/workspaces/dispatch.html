@@ -1,0 +1,36 @@
+<!-- WORKSPACE: FREIGHT & DISPATCH -->
+<div id="menu-workspace-dispatch" class="flex-1 p-4 md:p-8 overflow-y-auto hidden workspace-pane bg-pzdark flex-col gap-6 custom-scrollbar animate-page-fade">
+    <div class="max-w-7xl mx-auto w-full space-y-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-white/[0.08] pb-4 gap-4">
+            <div>
+                <h2 class="text-2xl sm:text-3xl font-black text-white uppercase tracking-widest drop-shadow-md">Freight & Dispatch</h2>
+                <p class="text-xs font-medium text-slate-400 mt-1 tracking-wider">Manage active trip sheets, outbound logistics, and driver assignments</p>
+            </div>
+            <button type="button" onclick="alert('Trip sheet creation modal')" class="bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:bg-right text-pzdark font-black text-xs uppercase tracking-widest px-5 py-3 rounded-xl shadow-[0_0_20px_rgba(245,158,11,0.2)] transition-all duration-300 active:scale-95 flex items-center gap-2 border border-amber-300/30">
+                ➕ New Trip Sheet
+            </button>
+        </div>
+
+        <div class="bg-pzpanel border border-white/[0.05] rounded-2xl overflow-hidden shadow-lg animate-slide-up">
+            <div class="px-6 py-5 border-b border-white/[0.05] bg-white/[0.02] flex justify-between items-center">
+                <h3 class="text-sm font-black text-white uppercase tracking-widest">Active Fleet Trips</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead class="text-[10px] text-slate-500 bg-pzdark uppercase tracking-widest font-black">
+                        <tr>
+                            <th class="p-4 pl-6">Trip ID</th>
+                            <th class="p-4">Driver & Vehicle</th>
+                            <th class="p-4">Destination Route</th>
+                            <th class="p-4">Orders Linked</th>
+                            <th class="p-4 text-right pr-6">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dispatch-table-body" class="divide-y divide-white/[0.05]">
+                        <!-- JS Injects Here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

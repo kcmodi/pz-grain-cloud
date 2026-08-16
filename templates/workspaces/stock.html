@@ -1,0 +1,96 @@
+<!-- WORKSPACE 6: STOCK ROOM -->
+<div id="menu-workspace-stock" class="flex-1 p-3 sm:p-4 md:p-8 overflow-y-auto hidden workspace-pane bg-pzdark print:hidden flex-col custom-scrollbar">
+    <div class="max-w-4xl mx-auto w-full bg-pzpanel p-4 sm:p-6 rounded-2xl border-2 border-white/[0.06] shadow-xl space-y-4 sm:space-y-6">
+        
+        <div>
+            <h2 class="text-lg sm:text-xl font-black text-white uppercase tracking-widest">📦 Storage Adjustments</h2>
+            <p class="text-xs font-medium text-slate-400 mt-1 tracking-wider">Manage silo capacities and log shrinkage</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            
+            <!-- Direct Overwrite Panel -->
+            <div class="bg-[#1b2020] p-4 rounded-xl border-2 border-white/[0.06] shadow-inner space-y-3">
+                <h3 class="text-xs font-black text-amber-500 uppercase border-b-2 border-white/5 pb-2 tracking-widest">Direct Overwrite</h3>
+                <div>
+                    <label class="block text-[10px] font-extrabold uppercase mb-1 text-slate-400 tracking-wider">Target Commodity</label>
+                    <select id="stock-adjust-code" class="w-full bg-pzpanel border-2 border-white/[0.08] text-white rounded-lg p-2 text-xs font-bold h-10 outline-none cursor-pointer focus:border-amber-500 transition-colors shadow-inner">
+                        <option value="">-- Code --</option>
+                        {% for grain in grains %}<option value="{{ grain.code }}">{{ grain.code }} — {{ grain.name }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-extrabold uppercase mb-1 text-slate-400 tracking-wider">New Volume (kg)</label>
+                    <input type="number" id="stock-adjust-value" class="w-full bg-pzpanel border-2 border-white/[0.08] text-white rounded-lg p-2 text-xs font-black h-10 outline-none focus:border-amber-500 transition-colors shadow-inner">
+                </div>
+                <button type="button" onclick="submitStockOverwrite()" class="w-full bg-amber-500 hover:bg-amber-400 text-pzdark font-black text-[10px] uppercase py-2.5 rounded-lg active:scale-95 h-10 border border-transparent transition-all tracking-wider">Force Save Level</button>
+            </div>
+
+            <!-- Log Spoilage Panel -->
+            <div class="bg-rose-500/10 p-4 rounded-xl border-2 border-rose-500/20 shadow-inner space-y-3">
+                <h3 class="text-xs font-black text-rose-400 uppercase border-b-2 border-rose-500/20 pb-2 tracking-widest">Log Spoilage & Write-Off</h3>
+                <div>
+                    <label class="block text-[10px] font-extrabold uppercase mb-1 text-slate-400 tracking-wider">Lost Commodity</label>
+                    <select id="writeoff-code" class="w-full bg-pzpanel border-2 border-rose-500/30 text-white rounded-lg p-2 text-xs font-bold h-10 outline-none cursor-pointer focus:border-rose-500 transition-colors shadow-inner">
+                        <option value="">-- Code --</option>
+                        {% for grain in grains %}<option value="{{ grain.code }}">{{ grain.code }} — {{ grain.name }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="flex gap-2">
+                    <div class="flex-1">
+                        <label class="block text-[10px] font-extrabold uppercase mb-1 text-slate-400 tracking-wider">Amount (kg)</label>
+                        <input type="number" id="writeoff-qty" class="w-full bg-pzpanel border-2 border-rose-500/30 text-white rounded-lg p-2 text-xs font-black h-10 outline-none focus:border-rose-500 transition-colors shadow-inner">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-[10px] font-extrabold uppercase mb-1 text-slate-400 tracking-wider">Reason</label>
+                        <select id="writeoff-reason" class="w-full bg-pzpanel border-2 border-rose-500/30 text-white rounded-lg p-2 text-xs font-bold h-10 outline-none cursor-pointer focus:border-rose-500 transition-colors shadow-inner">
+                            <option value="Moisture/Rot">Moisture</option>
+                            <option value="Pest Damage">Pest</option>
+                            <option value="Transit Spill">Spill</option>
+                            <option value="Theft/Missing">Theft</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="button" onclick="submitStockWriteOff()" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-black text-[10px] uppercase py-2.5 rounded-lg active:scale-95 h-10 border border-rose-500 transition-all tracking-wider">Deduct & Log</button>
+            </div>
+
+        </div>
+
+        <!-- Live Bin Inventory Table -->
+        <div class="border-2 border-white/[0.06] rounded-xl overflow-x-auto shadow-sm bg-pzdark hide-scrollbar">
+            <div class="min-w-[500px]">
+                <div class="grid grid-cols-3 bg-[#1b2020] p-3 font-black text-[10px] sm:text-xs uppercase border-b-2 border-white/[0.06] text-slate-400 tracking-widest">
+                    <div>Grain Code</div>
+                    <div>Name</div>
+                    <div class="text-right">Storage Status</div>
+                </div>
+                <div class="divide-y-2 divide-white/5">
+                    {% for grain in grains %}
+                    <div class="grid grid-cols-3 p-3 sm:p-4 hover:bg-white/[0.02] items-center transition-colors">
+                        <span class="font-mono font-black text-amber-500 text-xs sm:text-sm">{{ grain.code }}</span>
+                        <span class="font-extrabold text-xs sm:text-sm text-white">{{ grain.name }}</span>
+                        <span class="text-right font-mono font-black text-xs sm:text-sm {% if grain.stock_kg < 1000 %}text-rose-400 bg-rose-500/10 px-2 py-1 rounded-lg border border-rose-500/20 shadow-sm{% else %}text-emerald-400{% endif %}">
+                            {{ "{:,.0f}".format(grain.stock_kg) }} kg
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- End of Day Summary Card -->
+        <div class="bg-[#1b2020] p-4 sm:p-6 rounded-2xl border-2 border-white/[0.06] shadow-xl space-y-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h3 class="text-xs sm:text-sm font-black uppercase text-white tracking-widest">Daily Stock Movement EOD</h3>
+                    <p class="text-[10px] text-slate-400 font-medium tracking-wider mt-0.5">Calculated shift ledger across all silos</p>
+                </div>
+                <button type="button" onclick="generateDailyStockSummary()" class="bg-amber-500 hover:bg-amber-400 text-pzdark font-black text-[10px] uppercase py-2 px-4 rounded-lg active:scale-95 h-9 transition-all tracking-wider shadow-md">Generate EOD</button>
+            </div>
+            <div id="daily-stock-output" class="overflow-x-auto hide-scrollbar">
+                <p class="text-xs font-bold text-slate-400 text-center py-4">Click generate to compute shift balances...</p>
+            </div>
+        </div>
+
+    </div>
+</div>

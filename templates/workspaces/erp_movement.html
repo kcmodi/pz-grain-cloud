@@ -1,0 +1,36 @@
+<!-- WORKSPACE: ERP MOVEMENT LOG -->
+<div id="menu-workspace-erp-movement" class="flex-1 p-4 md:p-8 overflow-y-auto hidden workspace-pane bg-pzdark flex-col gap-6 custom-scrollbar animate-page-fade">
+    <div class="max-w-7xl mx-auto w-full space-y-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-white/[0.08] pb-4 gap-4">
+            <div>
+                <h2 class="text-2xl sm:text-3xl font-black text-white uppercase tracking-widest drop-shadow-md">Inventory Movement Log</h2>
+                <p class="text-xs font-medium text-slate-400 mt-1 tracking-wider">Chronological tracking of inbound receipts, outbound sales dispatches, and adjustments</p>
+            </div>
+            <div class="text-[10px] sm:text-xs font-bold text-amber-500 bg-amber-500/10 px-4 py-2 rounded-xl border border-amber-500/20 flex items-center gap-3 backdrop-blur-md">
+                <span class="uppercase tracking-widest">Stock Flow Stream</span>
+            </div>
+        </div>
+
+        <div class="bg-pzpanel border border-white/[0.05] rounded-2xl overflow-hidden shadow-lg animate-slide-up">
+            <div class="px-6 py-5 border-b border-white/[0.05] bg-white/[0.02]">
+                <h3 class="text-sm font-black text-white uppercase tracking-widest">Movement Journal Matrix</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead class="text-[10px] text-slate-500 bg-pzdark uppercase tracking-widest font-black">
+                        <tr>
+                            <th class="p-4 pl-6">Timestamp</th>
+                            <th class="p-4">Commodity Code</th>
+                            <th class="p-4">Flow Type</th>
+                            <th class="p-4">Volume Delta</th>
+                            <th class="p-4 text-right pr-6">Reference ID</th>
+                        </tr>
+                    </thead>
+                    <tbody id="movement-table-body" class="divide-y divide-white/[0.05]">
+                        <!-- JS Injects Here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

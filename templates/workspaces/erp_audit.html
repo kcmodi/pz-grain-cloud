@@ -1,0 +1,58 @@
+<!-- WORKSPACE: ERP DIGITAL AUDIT LOGS -->
+<div id="menu-workspace-erp-audit" class="flex-1 p-4 md:p-8 overflow-y-auto hidden workspace-pane bg-pzdark flex-col gap-6 custom-scrollbar animate-page-fade">
+    <div class="max-w-7xl mx-auto w-full space-y-6">
+        
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-white/[0.08] pb-4 gap-4">
+            <div>
+                <h2 class="text-2xl sm:text-3xl font-black text-white uppercase tracking-widest drop-shadow-md">Digital Audit Logs</h2>
+                <p class="text-xs font-medium text-slate-400 mt-1 tracking-wider">Immutable chronological trail of operator actions, system events, and data overrides</p>
+            </div>
+            <div class="text-[10px] sm:text-xs font-bold text-amber-500 bg-amber-500/10 px-4 py-2 rounded-xl border border-amber-500/20 flex items-center gap-3 backdrop-blur-md">
+                <span class="uppercase tracking-widest">Secure Trace Enabled</span>
+            </div>
+        </div>
+
+        <!-- Audit Log Table -->
+        <div class="bg-pzpanel border border-white/[0.05] rounded-2xl overflow-hidden shadow-lg animate-slide-up">
+            <div class="px-6 py-5 border-b border-white/[0.05] bg-white/[0.02] flex justify-between items-center">
+                <h3 class="text-sm font-black text-white uppercase tracking-widest">System Activity Journal</h3>
+                <span class="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Encrypted Stream</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead class="text-[10px] text-slate-500 bg-pzdark uppercase tracking-widest font-black">
+                        <tr>
+                            <th class="p-4 pl-6">Timestamp</th>
+                            <th class="p-4">Operator / User</th>
+                            <th class="p-4">Action Type</th>
+                            <th class="p-4 pr-6">Event Details & Metadata</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/[0.05]">
+                        <!-- Sample dynamic or static records reflecting the audit feed -->
+                        <tr class="hover:bg-white/[0.02] transition-colors">
+                            <td class="p-4 pl-6 font-mono text-xs text-slate-400">2026-08-04 18:42:01</td>
+                            <td class="p-4 font-bold text-white">Kalpen Modi <span class="text-[9px] text-amber-500 font-mono ml-1 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">Admin</span></td>
+                            <td class="p-4 font-mono text-xs text-emerald-400 font-bold">POS_CHECKOUT</td>
+                            <td class="p-4 pr-6 text-slate-400 text-xs font-mono">Committed invoice INV-9421 (Total: ₹14,500.00)</td>
+                        </tr>
+                        <tr class="hover:bg-white/[0.02] transition-colors">
+                            <td class="p-4 pl-6 font-mono text-xs text-slate-400">2026-08-04 14:15:30</td>
+                            <td class="p-4 font-bold text-white">System Daemon <span class="text-[9px] text-blue-400 font-mono ml-1 px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">Cron</span></td>
+                            <td class="p-4 font-mono text-xs text-blue-400 font-bold">AUTO_BACKUP</td>
+                            <td class="p-4 pr-6 text-slate-400 text-xs font-mono">Completed scheduled database snapshot archive.</td>
+                        </tr>
+                        <tr class="hover:bg-white/[0.02] transition-colors">
+                            <td class="p-4 pl-6 font-mono text-xs text-slate-400">2026-08-04 11:02:19</td>
+                            <td class="p-4 font-bold text-white">Kalpen Modi <span class="text-[9px] text-amber-500 font-mono ml-1 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">Admin</span></td>
+                            <td class="p-4 font-mono text-xs text-amber-400 font-bold">STOCK_OVERWRITE</td>
+                            <td class="p-4 pr-6 text-slate-400 text-xs font-mono">Adjusted Silo 1 wheat inventory levels (+5,000 kg).</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>

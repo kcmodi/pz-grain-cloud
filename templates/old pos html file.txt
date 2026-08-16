@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PZ Grain Enterprise Resource Planning</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
+    <style>
+        @media print { body * { visibility: hidden; } #receipt-print-frame, #receipt-print-frame * { visibility: visible; } #receipt-print-frame { position: absolute; left: 0; top: 0; width: 100%; border: none; padding: 0; margin: 0; } }
+        @keyframes smoothFadeUp { 0% { opacity: 0; transform: translateY(15px) scale(0.98); filter: blur(2px); } 100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } }
+        .animate-fade-up { animation: smoothFadeUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; } .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; } .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-slate-200 dark:bg-[#0e1111] text-slate-900 dark:text-slate-100 font-sans h-[100dvh] flex flex-col overflow-hidden antialiased selection:bg-emerald-300 dark:selection:bg-amber-500/20 dark:selection:text-amber-200 transition-colors duration-200" onload="initSystem()">
+
+    <div id="low-stock-banner" class="z-50 relative"></div>
+
+    <header class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 dark:from-[#141818] dark:via-[#0e1111] dark:to-[#141818] text-white flex flex-col shadow-xl border-b-2 border-slate-700 dark:border-white/5 print:hidden z-40 relative shrink-0">
+        <div class="px-4 lg:px-6 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3 shrink-0">
+                <div class="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 dark:from-amber-500 dark:to-amber-600 dark:text-[#0e1111] flex items-center justify-center font-black text-lg sm:text-xl shadow-lg border border-blue-400/30 dark:border-amber-400/20">PZ</div>
+                <div><h1 class="text-lg sm:text-xl font-black tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">Grain Suite ERP</h1><p class="text-[10px] sm:text-xs text-slate-300 dark:text-amber-500/80 font-mono font-bold tracking-widest">ENTERPRISE GATEWAY</p></div>
+            </div>
+            <div class="shrink-0 flex items-center gap-3 lg:gap-6">
+                <button type="button" onclick="toggleThemeMode()" class="bg-slate-800 dark:bg-[#1b2020] border-2 border-slate-700 dark:border-white/[0.08] hover:border-slate-500 dark:hover:border-amber-500/50 text-slate-300 dark:text-amber-400 p-2 sm:p-2.5 rounded-xl text-sm transition-all shadow-inner cursor-pointer active:scale-95"><span id="theme-toggle-icon">☀️</span></button>
+                <div class="hidden md:flex bg-slate-950/80 dark:bg-[#141818] border-2 border-slate-700 dark:border-white/[0.06] shadow-inner px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl items-center gap-2 sm:gap-3"><div class="relative flex h-2.5 w-2.5 sm:h-3 sm:w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-emerald-500 dark:bg-amber-500"></span></div><div class="flex flex-col"><span class="text-[9px] sm:text-[10px] text-slate-400 font-extrabold uppercase tracking-widest leading-none mb-1">Operator ({{ session.get('role') or 'Staff' }})</span><span class="text-xs sm:text-sm font-black text-emerald-400 dark:text-amber-400 uppercase tracking-widest leading-none">{{ session.username }}</span></div></div>
+                <a href="/logout" class="bg-rose-600 hover:bg-rose-500 text-white font-black text-[10px] sm:text-xs uppercase px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl transition-all tracking-wider cursor-pointer flex items-center gap-1.5 shadow-lg shadow-rose-900/50 active:scale-95 border border-rose-500"><span class="hidden sm:inline">Sign Out</span> 🚪</a>
+            </div>
+        </div>
+
+        <nav class="bg-slate-900/95 dark:bg-[#0e1111]/95 backdrop-blur-xl border-t border-slate-700/50 dark:border-white/5 flex flex-wrap hide-scrollbar text-xs sm:text-sm font-extrabold uppercase tracking-wider px-2 z-[60]">
+            <button type="button" onclick="switchTabWorkspace('dashboard')" class="px-4 sm:px-6 py-3 sm:py-4 text-emerald-400 hover:text-white dark:hover:text-emerald-300 hover:bg-slate-800 dark:hover:bg-[#141818] transition cursor-pointer outline-none">Dashboard 📊</button>
+            <div class="relative inline-block shrink-0 group">
+                <button type="button" class="px-4 sm:px-6 py-3 sm:py-4 text-slate-300 dark:text-slate-400 hover:text-white dark:hover:text-amber-400 hover:bg-slate-800 dark:hover:bg-[#141818] transition cursor-pointer outline-none">Master Directory ▾</button>
+                <div class="hidden group-hover:block absolute left-0 top-full mt-0 w-56 sm:w-64 bg-white dark:bg-[#141818] border-2 border-slate-300 dark:border-white/[0.06] shadow-2xl rounded-b-2xl py-2 z-[100] text-slate-800 dark:text-slate-200 capitalize tracking-normal text-sm sm:text-base font-bold max-h-[70vh] overflow-y-auto custom-scrollbar">
+                    <button type="button" onclick="switchTabWorkspace('catalog')" class="w-full text-left block px-4 py-2.5 sm:py-3 hover:bg-emerald-100 hover:text-emerald-800 dark:hover:text-amber-400 transition-colors">🌾 Commodity Catalog</button>
+                    <button type="button" onclick="switchTabWorkspace('addcust')" class="w-full text-left block px-4 py-2.5 sm:py-3 hover:bg-blue-100 hover:text-blue-800 dark:hover:text-amber-400 transition-colors">👥 Client Registration</button>
+                    <div class="border-t-2 border-slate-200 dark:border-white/5 my-1"></div>
+                    <button type="button" onclick="switchTabWorkspace('erp-contracts')" class="w-full text-left block px-4 py-2.5 sm:py-3 hover:bg-indigo-100 hover:text-indigo-800 dark:hover:text-amber-400 transition-colors">📜 Contract Management</button>
+                    <button type="button" onclick="switchTabWorkspace('erp-customers')" class="w-full text-left block px-4 py-2.5 sm:py-3 hover:bg-blue-100 hover:text-blue-800 dark:hover:text-amber-400 transition-colors">📁 Customer Database</button>
+                    <button type="button" onclick="switchTabWorkspace('erp-suppliers')" class="w-full text-left block px-4 py-2.5 sm:py-3 hover:bg-amber-100 hover:text-amber-800 dark:hover:text-amber-400 transition-colors">🚚 Supplier Network</button>
+                </div>
+            </div>
+            <div class="relative inline-block shrink-0 group">
+                <button type="button" class="px-4 sm:px-6 py-3 sm:py-4 text-slate-300 dark:text-slate-400 hover:text-white dark:hover:text-amber-400 hover:bg-slate-800 dark:hover:bg-[#141818] transition cursor-pointer outline-none">Trade & Entry ▾</button>
+                <div class="hidden group-hover:block absolute left-0 top-full mt-0 w-56 sm:w-64 bg-white dark:bg-[#141818] border-2 border-slate-300 dark:border-white/[0.06] shadow-2xl rounded-b-2xl py-2 z-[100] text-slate-800 dark:text-slate-200 capitalize tracking-normal text-sm sm:text-base font-bold max-h-[70vh] overflow-y-auto custom-scrollbar">
+                    <button type="button" onclick="switchTabWorkspace('create')" class="w-full text-left block px-4 py-2.5 sm:py-3 hover:bg-blue-100 hover:text-blue-800 dark:hover:text-amber-400 transition-colors">🛒 Sales POS Terminal</button>
+                    <button type="button" onclick="switchTabWorkspace('purchase')" class="w-full text-left block px-4 py-2.5 sm:py-3 hover:bg-emerald-100 hover:text-emerald-800 dark:hover:text-amber-400 transition-colors">➕ Inbound Purchase & Lab</button>
+                    <div class="border-t-2 border-slate-200 dark:border-white/5 my-1"></div>
+                    <button type="button" onclick="switchTabWorkspace('erp-approvals')" class="w-full text-left block px-4 py-2.5 sm:py-3 hover:bg-purple-100 hover:text-purple-800 dark:hover:text-amber-400 transition-colors">✅ Approval Workflows</button>
+                    <button type="button" onclick="switchTabWorkspace('editorder')" class="w-full text-left block px-4 py-2.5 sm:py-3 hover:bg-amber-100 hover:text-amber-800 dark:hover:text-amber-400 transition-colors">✏️ Edit Sales Invoice</button>
+                    <button type="button" onclick="switchTabWorkspace('editpurchase')" class="w-full text-left block px-4 py-2.5 sm:py-3 hover:bg-amber-100 hover:text-amber-800 dark:hover:text-amber-400 transition-colors">✏️ Edit Purchase Bill</button>
+                    <div class="border-t-2 border-slate-200 dark:border-white/5 my-1"></div>
+                    <button type="button" onclick="switchTabWorkspace('pending')" class="w-full text-left block px-4 py-2.5 sm:py-3 hover:bg-rose-100 hover:text-rose-800 dark:hover:text-amber-400 transition-colors">⏳ Settle Pending Dues</button>
+                </div>
+            </div>
+            {% if (session.get('role') or '').lower() in ['admin', 'manager', 'owner'] %}
+            <div class="relative inline-block shrink-0 group">
+                <button type="button" class="px-4 sm:px-6 py-3 sm:py-4 text-slate-300 dark:text-slate-400 hover:text-white dark:hover:text-amber-400 hover:bg-slate-800 dark:hover:bg-[#141818] transition cursor-pointer outline-none">Reports & Finance ▾</button>
+                <div class="hidden group-hover:block absolute left-0 top-full mt-0 w-56 sm:w-60 bg-white dark:bg-[#141818] border-2 border-slate-300 dark:border-white/[0.06] shadow-2xl rounded-b-2xl py-2 z-[100] text-slate-800 dark:text-slate-200 capitalize tracking-normal text-sm sm:text-base font-bold max-h-[70vh] overflow-y-auto custom-scrollbar">
+                    <button type="button" onclick="switchTabWorkspace('lookup')" class="w-full text-left block px-4 py-2.5 sm:py-3 hover:bg-slate-200 dark:hover:text-amber-400 transition-colors">🔍 Search Ledger Records</button>
+                    <button type="button" onclick="switchTabWorkspace('erp-payments')" class="w-full text-left block px-4 py-2.5 sm:py-3 hover:bg-emerald-100 hover:text-emerald-800 dark:hover:text-amber-400 transition-colors">💳 Master Payment Ledger</button>
+                    <button type="button" onclick="switchTabWorkspace('erp-expenses')" class="w-full text-left block px-4 py-2.5 sm:py-3 hover:bg-rose-100 hover:text-rose-800 dark:hover:text-amber-400 transition-colors">💸 Operational Expenses</button>
+                    <button type="button" onclick="switchTabWorkspace('erp-reports')" class="w-full text-left block px-4 py-2.5 sm:py-3 hover:bg-indigo-100 hover:text-indigo-800 dark:hover:text-amber-400 transition-colors">📈 Financial Analytics</button>
+                    <div class="border-t-2 border-slate-200 dark:border-white/5 my-1"></div>
+                    <button type="button" onclick="switchTabWorkspace('erp-audit')" class="w-full text-left block px-4 py-2.5 sm:py-3 hover:bg-rose-100 hover:text-rose-800 dark:hover:text-amber-400 transition-colors">🔐 Digital Audit Logs</button>
+                </div>
+            </div>
+            {% endif %}
+            <div class="relative inline-block shrink-0 group">
+                <button type="button" class="px-4 sm:px-6 py-3 sm:py-4 text-slate-300 dark:text-slate-400 hover:text-white dark:hover:text-amber-400 hover:bg-slate-800 dark:hover:bg-[#141818] transition cursor-pointer outline-none">Inventory & Logistics ▾</button>
+                <div class="hidden group-hover:block absolute left-0 top-full mt-0 w-56 sm:w-60 bg-white dark:bg-[#141818] border-2 border-slate-300 dark:border-white/[0.06] shadow-2xl rounded-b-2xl py-2 z-[100] text-slate-800 dark:text-slate-200 capitalize tracking-normal text-sm sm:text-base font-bold max-h-[70vh] overflow-y-auto custom-scrollbar">
+                    <button type="button" onclick="switchTabWorkspace('stock')" class="w-full text-left block px-4 py-2.5 sm:py-3 hover:bg-blue-100 hover:text-blue-800 dark:hover:text-amber-400 transition-colors">📦 Live Bin & Stock Room</button>
+                    <button type="button" onclick="switchTabWorkspace('dispatch')" class="w-full text-left block px-4 py-2.5 sm:py-3 hover:bg-amber-100 hover:text-amber-800 dark:hover:text-amber-400 transition-colors">🚚 Freight & Dispatch</button>
+                    {% if (session.get('role') or '').lower() in ['admin', 'manager', 'owner'] %}
+                    <button type="button" onclick="switchTabWorkspace('erp-movement')" class="w-full text-left block px-4 py-2.5 sm:py-3 hover:bg-slate-200 dark:hover:text-amber-400 transition-colors">📦 Movement Log</button>
+                    {% endif %}
+                </div>
+            </div>
+            {% if (session.get('role') or '').lower() in ['admin', 'manager', 'owner'] %}
+            <div class="relative inline-block shrink-0 group">
+                <button type="button" class="px-4 sm:px-6 py-3 sm:py-4 text-slate-300 dark:text-slate-400 hover:text-white dark:hover:text-amber-400 hover:bg-slate-800 dark:hover:bg-[#141818] transition cursor-pointer outline-none">Admin System ▾</button>
+                <div class="hidden group-hover:block absolute right-0 sm:left-0 sm:right-auto top-full mt-0 w-60 sm:w-64 bg-white dark:bg-[#141818] border-2 border-slate-300 dark:border-white/[0.06] shadow-2xl rounded-b-2xl py-2 z-[100] text-slate-800 dark:text-slate-200 capitalize tracking-normal text-sm sm:text-base font-bold max-h-[70vh] overflow-y-auto custom-scrollbar">
+                    <button type="button" onclick="switchTabWorkspace('erp-employees')" class="w-full text-left block px-4 py-2.5 sm:py-3 hover:bg-indigo-100 hover:text-indigo-800 dark:hover:text-amber-400 transition-colors">🧑‍💼 Employee Management</button>
+                    <button type="button" onclick="switchTabWorkspace('adminsetup')" class="w-full text-left block px-4 py-2.5 sm:py-3 hover:bg-indigo-100 hover:text-indigo-800 dark:hover:text-amber-400 transition-colors">➕ Config & Staff Onboarding</button>
+                    <div class="border-t-2 border-slate-200 dark:border-white/5 my-1"></div>
+                    {% if (session.get('role') or '').lower() in ['admin', 'owner'] %}
+                    <button type="button" onclick="switchTabWorkspace('delete')" class="w-full text-left block px-4 py-2.5 sm:py-3 hover:bg-rose-100 hover:text-rose-800 dark:hover:text-amber-400 transition-colors">❌ Purge Database Rows</button>
+                    {% endif %}
+                    <button type="button" onclick="window.location.reload()" class="w-full text-left block px-4 py-2.5 sm:py-3 hover:bg-slate-200 dark:hover:text-amber-400 transition-colors mt-1">🔄 Refresh Application</button>
+                </div>
+            </div>
+            {% endif %}
+        </nav>
+    </header>
+
+    <!-- WORKSPACE 0: DASHBOARD & KPIs -->
+    <div id="menu-workspace-dashboard" class="flex-1 p-4 md:p-8 overflow-y-auto hidden workspace-pane bg-slate-200 dark:bg-[#0e1111] print:hidden flex-col gap-6">
+        <div class="max-w-7xl mx-auto w-full space-y-6">
+            <div class="flex items-center justify-between border-b-2 border-slate-300 dark:border-white/10 pb-3">
+                <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-widest">Terminal Overview</h2>
+                <div class="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-300 dark:border-emerald-500/20 flex items-center gap-2">
+                    <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span></span>
+                    Systems Operational
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white dark:bg-[#141818] p-5 rounded-2xl border border-slate-200 dark:border-white/[0.05] shadow-lg relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-bl-[100px] transition-transform group-hover:scale-110"></div>
+                    <p class="text-[10px] uppercase font-bold text-slate-500 mb-1 relative z-10">Gross Revenue (MTD)</p>
+                    <h3 class="text-3xl font-black text-slate-900 dark:text-white font-mono relative z-10">₹{{ "{:,.2f}".format(orders|sum(attribute='total_amount')|default(145000)) }}</h3>
+                    <p class="text-[10px] font-bold text-emerald-600 mt-2 flex items-center gap-1 relative z-10"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg> +12.5% vs Last Month</p>
+                </div>
+                <div class="bg-white dark:bg-[#141818] p-5 rounded-2xl border border-slate-200 dark:border-white/[0.05] shadow-lg relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-bl-[100px] transition-transform group-hover:scale-110"></div>
+                    <p class="text-[10px] uppercase font-bold text-slate-500 mb-1 relative z-10">Active Contracts</p>
+                    <h3 class="text-3xl font-black text-slate-900 dark:text-white font-mono relative z-10">14</h3>
+                    <p class="text-[10px] font-bold text-slate-400 mt-2 relative z-10">4 Forward, 10 Spot</p>
+                </div>
+                <div class="bg-white dark:bg-[#141818] p-5 rounded-2xl border border-slate-200 dark:border-white/[0.05] shadow-lg relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-bl-[100px] transition-transform group-hover:scale-110"></div>
+                    <p class="text-[10px] uppercase font-bold text-slate-500 mb-1 relative z-10">Pending Approvals</p>
+                    <h3 class="text-3xl font-black text-amber-600 dark:text-amber-500 font-mono relative z-10">3 Tasks</h3>
+                    <p class="text-[10px] font-bold text-amber-600 mt-2 relative z-10">Requires Manager Sign-off</p>
+                </div>
+                <div class="bg-white dark:bg-[#141818] p-5 rounded-2xl border border-slate-200 dark:border-white/[0.05] shadow-lg relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-purple-500/10 rounded-bl-[100px] transition-transform group-hover:scale-110"></div>
+                    <p class="text-[10px] uppercase font-bold text-slate-500 mb-1 relative z-10">Active Freight</p>
+                    <h3 class="text-3xl font-black text-slate-900 dark:text-white font-mono relative z-10">5 Trucks</h3>
+                    <p class="text-[10px] font-bold text-purple-500 mt-2 relative z-10">3 In-Transit, 2 Loading</p>
+                </div>
+            </div>
+
+            <h3 class="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-4">Quick Operations</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <button onclick="switchTabWorkspace('create')" class="group relative bg-white dark:bg-[#141818] border border-slate-200 dark:border-white/[0.05] p-6 rounded-2xl flex flex-col items-center justify-center gap-3 transition-all hover:border-blue-500 hover:shadow-[0_0_20px_rgba(59,130,246,0.15)] active:scale-95">
+                    <div class="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform text-blue-600">🛒</div>
+                    <span class="text-xs font-black uppercase text-slate-700 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">New Sale POS</span>
+                </button>
+                <button onclick="switchTabWorkspace('purchase')" class="group relative bg-white dark:bg-[#141818] border border-slate-200 dark:border-white/[0.05] p-6 rounded-2xl flex flex-col items-center justify-center gap-3 transition-all hover:border-emerald-500 hover:shadow-[0_0_20px_rgba(16,185,129,0.15)] active:scale-95">
+                    <div class="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform text-emerald-600">📥</div>
+                    <span class="text-xs font-black uppercase text-slate-700 dark:text-slate-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400">Inbound & Lab</span>
+                </button>
+                <button onclick="switchTabWorkspace('stock')" class="group relative bg-white dark:bg-[#141818] border border-slate-200 dark:border-white/[0.05] p-6 rounded-2xl flex flex-col items-center justify-center gap-3 transition-all hover:border-purple-500 hover:shadow-[0_0_20px_rgba(168,85,247,0.15)] active:scale-95">
+                    <div class="w-12 h-12 rounded-full bg-purple-50 dark:bg-purple-500/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform text-purple-600">🏢</div>
+                    <span class="text-xs font-black uppercase text-slate-700 dark:text-slate-300 group-hover:text-purple-600 dark:group-hover:text-purple-400">Warehouse/Bins</span>
+                </button>
+                <button onclick="switchTabWorkspace('erp-approvals')" class="group relative bg-white dark:bg-[#141818] border border-slate-200 dark:border-white/[0.05] p-6 rounded-2xl flex flex-col items-center justify-center gap-3 transition-all hover:border-rose-500 hover:shadow-[0_0_20px_rgba(244,63,94,0.15)] active:scale-95">
+                    <div class="w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform text-rose-600">✅</div>
+                    <span class="text-xs font-black uppercase text-slate-700 dark:text-slate-300 group-hover:text-rose-600 dark:group-hover:text-rose-400">Approve Tasks</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- WORKSPACE 1: SALES POS -->
+    <div id="menu-workspace-create" class="flex flex-1 overflow-y-auto lg:overflow-hidden workspace-pane print:hidden flex-col lg:flex-row relative z-10">
+        <div class="w-full lg:w-2/3 p-3 md:p-4 flex flex-col gap-4 lg:overflow-y-auto bg-slate-200 dark:bg-[#0e1111]">
+            <div class="bg-white dark:bg-[#141818] p-3 sm:p-4 rounded-xl border-2 border-slate-300 dark:border-white/[0.06] shadow-md space-y-3 relative z-20">
+                <div class="flex flex-col md:flex-row md:items-center justify-between border-b-2 border-slate-200 dark:border-white/5 pb-2 gap-2">
+                    <h3 class="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest flex items-center gap-1">Customer Registration & POS</h3>
+                    <div class="flex items-center gap-2 w-full md:w-auto">
+                        <button type="button" onclick="setWalkInCustomer()" class="bg-slate-300 dark:bg-[#1b2020] hover:bg-slate-400 text-slate-800 dark:text-slate-300 font-black text-[10px] sm:text-xs uppercase tracking-wider px-2 sm:px-3 py-1.5 rounded-lg cursor-pointer transition-colors shadow-sm active:scale-95 shrink-0 h-9 border border-slate-400 dark:border-white/[0.08]" title="Quick Guest Checkout">🚶 Walk-in</button>
+                        <div class="relative w-full md:w-48 lg:w-56 z-30">
+                            <input type="text" id="sales-cust-search" oninput="runLiveBarSearch(this.value, 'sales')" placeholder="🔍 Search Name/Code/Phone..." class="bg-slate-100 dark:bg-[#1b2020] border-2 border-slate-400 dark:border-white/[0.08] rounded-lg px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-bold outline-none w-full focus:bg-white dark:focus:bg-[#1b2020] focus:border-blue-600 transition-all shadow-inner h-9 text-slate-900 dark:text-white">
+                            <div id="sales-search-dropdown" class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-[#141818] border-2 border-slate-300 dark:border-white/[0.06] rounded-xl shadow-2xl max-h-56 overflow-y-auto hidden divide-y divide-slate-200 dark:divide-white/5 z-[100]"></div>
+                        </div>
+                        <button type="button" onclick="savePOSCustomer()" class="bg-blue-600 dark:bg-amber-500 hover:bg-blue-500 text-white dark:text-[#0e1111] font-black text-[10px] sm:text-xs uppercase tracking-wider px-3 sm:px-4 py-1.5 rounded-lg cursor-pointer transition-all shadow-lg active:scale-95 shrink-0 h-9">💾 Save</button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-6 gap-2 sm:gap-3">
+                    <div class="col-span-1"><label class="block text-[9px] sm:text-[10px] font-extrabold text-slate-800 dark:text-slate-400 uppercase mb-0.5">Code</label><input type="text" id="cust-code" placeholder="New" readonly class="w-full bg-slate-200 dark:bg-[#1b2020] border-2 border-slate-300 dark:border-white/[0.08] rounded-lg px-2 py-1.5 text-xs font-mono font-black text-blue-700 dark:text-amber-500 text-center outline-none shadow-inner h-8"></div>
+                    <div class="col-span-2 sm:col-span-2 xl:col-span-2"><label class="block text-[9px] sm:text-[10px] font-extrabold text-slate-800 dark:text-slate-400 uppercase mb-0.5">Name</label><input type="text" id="cust-name" placeholder="Rajesh Kumar" class="w-full bg-white dark:bg-[#1b2020] border-2 border-slate-400 dark:border-white/[0.08] rounded-lg px-2 py-1.5 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-blue-600 transition-colors shadow-sm h-8"></div>
+                    <div class="col-span-1 sm:col-span-1 xl:col-span-1"><label class="block text-[9px] sm:text-[10px] font-extrabold text-slate-800 dark:text-slate-400 uppercase mb-0.5">Phone</label><input type="text" id="cust-phone" placeholder="+91..." class="w-full bg-white dark:bg-[#1b2020] border-2 border-slate-400 dark:border-white/[0.08] rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-blue-600 transition-colors shadow-sm h-8"></div>
+                    <div class="col-span-2 sm:col-span-4 xl:col-span-2"><label class="block text-[9px] sm:text-[10px] font-extrabold text-slate-800 dark:text-slate-400 uppercase mb-0.5">Email</label><input type="email" id="cust-email" placeholder="rajesh@..." class="w-full bg-white dark:bg-[#1b2020] border-2 border-slate-400 dark:border-white/[0.08] rounded-lg px-2 py-1.5 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-blue-600 transition-colors shadow-sm h-8"></div>
+                    <div class="col-span-2 sm:col-span-4 xl:col-span-2"><label class="block text-[9px] sm:text-[10px] font-extrabold text-slate-800 dark:text-slate-400 uppercase mb-0.5">Street</label><input type="text" id="cust-street" placeholder="123 Corporate Blvd" class="w-full bg-white dark:bg-[#1b2020] border-2 border-slate-400 dark:border-white/[0.08] rounded-lg px-2 py-1.5 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-blue-600 transition-colors shadow-sm h-8"></div>
+                    <div class="col-span-1"><label class="block text-[9px] sm:text-[10px] font-extrabold text-slate-800 dark:text-slate-400 uppercase mb-0.5">City</label><input type="text" id="cust-city" oninput="autoFillLocation('cust')" placeholder="Newark" class="w-full bg-white dark:bg-[#1b2020] border-2 border-slate-400 dark:border-white/[0.08] rounded-lg px-2 py-1.5 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-blue-600 transition-colors shadow-sm h-8"></div>
+                    <div class="col-span-1"><label class="block text-[9px] sm:text-[10px] font-extrabold text-slate-800 dark:text-slate-400 uppercase mb-0.5">State</label><input type="text" id="cust-state" placeholder="DE" class="w-full bg-white dark:bg-[#1b2020] border-2 border-slate-400 dark:border-white/[0.08] rounded-lg px-2 py-1.5 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-blue-600 transition-colors shadow-sm h-8"></div>
+                    <div class="col-span-1"><label class="block text-[9px] sm:text-[10px] font-extrabold text-slate-800 dark:text-slate-400 uppercase mb-0.5">Zip</label><input type="text" id="cust-zipcode" placeholder="19702" class="w-full bg-white dark:bg-[#1b2020] border-2 border-slate-400 dark:border-white/[0.08] rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-blue-600 transition-colors shadow-sm h-8"></div>
+                    <div class="col-span-1"><label class="block text-[9px] sm:text-[10px] font-extrabold text-slate-800 dark:text-slate-400 uppercase mb-0.5">Country</label><input type="text" id="cust-country" placeholder="USA" class="w-full bg-white dark:bg-[#1b2020] border-2 border-slate-400 dark:border-white/[0.08] rounded-lg px-2 py-1.5 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-blue-600 transition-colors shadow-sm h-8"></div>
+                    <div class="col-span-2 sm:col-span-4 xl:col-span-6">
+                        <label class="block text-[9px] sm:text-[10px] font-extrabold text-slate-800 dark:text-slate-400 uppercase mb-0.5">Delivery Area / Zone</label>
+                        <select id="cust-area" class="w-full bg-white dark:bg-[#1b2020] border-2 border-slate-400 dark:border-white/[0.08] rounded-lg px-2 py-1.5 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-blue-600 transition-colors shadow-sm cursor-pointer h-8">
+                            <option value="">-- Select Assigned Routing Area --</option>
+                            {% for area in areas %}<option value="{{ area.id }}">{{ area.name }} - {{ area.desc }}</option>{% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-[#141818] p-4 sm:p-5 rounded-xl border-2 border-slate-300 dark:border-white/[0.06] shadow-md space-y-3 z-0">
+                <div class="flex items-center justify-between border-b-2 border-slate-200 dark:border-white/5 pb-2"><h3 class="text-[11px] sm:text-xs font-black text-blue-700 dark:text-amber-500 uppercase tracking-widest">Smart Item Entry Console (Scale & Batch Link)</h3></div>
+                
+                <div class="flex flex-col md:flex-row items-start gap-3 sm:gap-4">
+                    <div class="w-full md:w-[20%]">
+                        <label class="block text-[10px] font-extrabold text-slate-800 dark:text-slate-400 uppercase tracking-wider mb-1">1. Grain Code</label>
+                        <input type="text" id="terminal-code" placeholder="e.g., 101" maxlength="3" oninput="checkGrainCode(this.value, 'create')" class="w-full bg-slate-100 dark:bg-[#1b2020] border-2 border-slate-400 dark:border-white/[0.08] rounded-lg p-2.5 font-mono text-lg font-black text-center shadow-inner focus:bg-white dark:focus:bg-[#1b2020] focus:border-blue-600 transition-all outline-none text-slate-900 dark:text-white h-12">
+                    </div>
+                    <div class="w-full md:w-[25%]">
+                        <label class="block text-[10px] font-extrabold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider mb-1">Source Batch / Silo</label>
+                        <select id="terminal-batch" class="w-full bg-indigo-50 dark:bg-[#1b2020] border-2 border-indigo-200 dark:border-indigo-500/30 rounded-lg p-2.5 text-xs font-bold text-slate-900 dark:text-white h-12 outline-none cursor-pointer">
+                            <option value="AUTO">Auto-Select FIFO</option>
+                            <option value="B-9912">B-9912 (Silo 1)</option>
+                            <option value="B-9913">B-9913 (Warehouse A)</option>
+                        </select>
+                    </div>
+                    <div class="w-full md:flex-1">
+                        <label class="block text-[10px] font-extrabold text-slate-800 dark:text-slate-400 uppercase tracking-wider mb-1">Verification</label>
+                        <div id="item-preview-box" class="h-12 flex items-center bg-slate-100 dark:bg-[#1b2020] border-2 border-dashed border-slate-400 dark:border-white/[0.08] rounded-lg px-3 text-xs font-bold text-slate-600 dark:text-slate-400 tracking-wide transition-colors">Waiting for a valid 3-digit commodity code...</div>
+                    </div>
+                    <div class="w-full md:w-[25%]">
+                        <label class="block text-[10px] font-extrabold text-slate-800 dark:text-slate-400 uppercase tracking-wider mb-1">2. Quantity (kg)</label>
+                        <div class="flex gap-1">
+                            <input type="number" id="terminal-qty" value="50" min="1" disabled class="w-full bg-slate-200 dark:bg-[#0e1111] border-2 border-slate-300 dark:border-white/[0.04] rounded-lg p-2.5 text-lg font-black text-center text-slate-500 outline-none h-12">
+                            <button type="button" onclick="connectHardwareScale('terminal-qty')" title="Fetch Weight from COM Port Digital Scale" class="bg-slate-800 dark:bg-amber-500 text-white dark:text-[#0e1111] px-3 rounded-lg hover:bg-slate-700 active:scale-95 transition-all h-12 border-2 border-slate-900 dark:border-transparent flex items-center justify-center text-lg">⚖️</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end pt-1">
+                    <button type="button" id="add-to-manifest-btn" onclick="processTerminalEntry('create')" disabled class="w-full md:w-auto bg-slate-300 dark:bg-[#1b2020] text-slate-500 dark:text-slate-400 font-black py-2 px-8 rounded-lg text-xs uppercase tracking-wider cursor-not-allowed transition-all border-2 border-slate-400 dark:border-white/[0.06] h-10">Add to Order List</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-full lg:w-1/3 bg-white dark:bg-[#141818] border-t-4 lg:border-t-0 lg:border-l-4 border-slate-300 dark:border-white/[0.06] shadow-2xl flex flex-col relative z-10 shrink-0 lg:h-full lg:overflow-hidden min-h-0">
+            <div class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div class="p-3 sm:p-4 pb-2 shrink-0 border-b-2 border-slate-200 dark:border-white/5 mx-3 sm:mx-4 mt-3">
+                    <h2 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Current Manifest</h2>
+                </div>
+                <div id="manifest-container" class="flex-1 overflow-y-auto px-3 sm:px-4 py-2 space-y-2 min-h-[80px]">
+                    <div class="flex flex-col items-center justify-center py-10 text-slate-500 gap-2"><span class="text-3xl">🛒</span><p class="text-xs font-bold tracking-wide">No grain entries loaded</p></div>
+                </div>
+            </div>
+            
+            <div class="shrink-0 flex flex-col bg-slate-100 dark:bg-[#0e1111] border-t-2 border-slate-300 dark:border-white/5 max-h-[60vh] lg:max-h-[55vh]">
+                <div class="flex-1 min-h-0 overflow-y-auto p-3 sm:p-4 space-y-3">
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-slate-800 dark:text-slate-400 uppercase tracking-widest mb-1">Link to Forward Contract (Optional)</label>
+                        <select class="w-full bg-white dark:bg-[#1b2020] border-2 border-slate-400 dark:border-white/[0.08] rounded-lg p-2 text-xs font-bold text-slate-900 dark:text-white outline-none cursor-pointer">
+                            <option value="">None (Spot Sale)</option>
+                            <option value="FWD-1029">FWD-1029 - AgriCorp Ltd.</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-slate-800 dark:text-slate-400 uppercase tracking-widest mb-1">Order Fulfillment</label>
+                        <div class="flex gap-2 bg-slate-300 dark:bg-[#1b2020] p-1 rounded-lg w-full shadow-inner border border-slate-400 dark:border-white/[0.06]">
+                            <label class="flex-1 text-center relative cursor-pointer"><input type="radio" name="fulfillment-opt" value="Takeaway" class="peer sr-only" checked><div class="py-2 px-2 text-xs font-black text-slate-600 dark:text-slate-400 rounded peer-checked:bg-white dark:peer-checked:bg-[#141818] peer-checked:text-indigo-700 dark:peer-checked:text-amber-400 peer-checked:shadow-md transition-all border-2 border-transparent">🛍️ Takeaway</div></label>
+                            <label class="flex-1 text-center relative cursor-pointer"><input type="radio" name="fulfillment-opt" value="Delivery" class="peer sr-only"><div class="py-2 px-2 text-xs font-black text-slate-600 dark:text-slate-400 rounded peer-checked:bg-white dark:peer-checked:bg-[#141818] peer-checked:text-indigo-700 dark:peer-checked:text-amber-400 peer-checked:shadow-md transition-all border-2 border-transparent">🚚 Delivery</div></label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-slate-800 dark:text-slate-400 uppercase tracking-widest mb-1">Select Payment Method</label>
+                        <select id="create-pay-method" onchange="toggleSplitPanel('create')" class="w-full bg-white dark:bg-[#1b2020] border-2 border-slate-400 dark:border-white/[0.08] rounded-lg p-2 text-xs sm:text-sm font-bold text-slate-900 dark:text-white outline-none shadow-sm cursor-pointer focus:border-blue-600 transition-colors h-10">
+                            <option value="Cash">💵 Cash</option>
+                            <option value="UPI">📱 UPI / QR</option>
+                            <option value="Card">💳 Card Swipe</option>
+                            <option value="Net Banking">🏦 Net Banking</option>
+                            <option value="Check">📝 Check</option>
+                            <option value="Cash on Delivery">🚚 Cash on Delivery</option>
+                            <option value="Pay Later">⏳ Pay Later / Credit</option>
+                            <option value="Split">🔀 Split Payment Accurately</option>
+                        </select>
+
+                        <div id="create-split-panel" class="hidden mt-2 p-2 bg-slate-200 dark:bg-[#1b2020] border-2 border-slate-300 dark:border-white/[0.06] rounded-lg grid grid-cols-1 sm:grid-cols-2 gap-2 shadow-inner">
+                            <div><span class="block text-[10px] font-black text-slate-700 dark:text-slate-400 mb-0.5">💵 Cash</span><input type="number" id="split-create-cash" class="w-full bg-white dark:bg-[#141818] border-2 border-slate-400 dark:border-white/[0.08] rounded text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-blue-600 transition-colors p-1.5" min="0" value="0"></div>
+                            <div><span class="block text-[10px] font-black text-slate-700 dark:text-slate-400 mb-0.5">📱 UPI</span><input type="number" id="split-create-upi" class="w-full bg-white dark:bg-[#141818] border-2 border-slate-400 dark:border-white/[0.08] rounded text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-blue-600 transition-colors p-1.5" min="0" value="0"></div>
+                            <div><span class="block text-[10px] font-black text-slate-700 dark:text-slate-400 mb-0.5">💳 Card</span><input type="number" id="split-create-card" class="w-full bg-white dark:bg-[#141818] border-2 border-slate-400 dark:border-white/[0.08] rounded text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-blue-600 transition-colors p-1.5" min="0" value="0"></div>
+                            <div><span class="block text-[10px] font-black text-slate-700 dark:text-slate-400 mb-0.5">🏦 Bank</span><input type="number" id="split-create-bank" class="w-full bg-white dark:bg-[#141818] border-2 border-slate-400 dark:border-white/[0.08] rounded text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-blue-600 transition-colors p-1.5" min="0" value="0"></div>
+                            <div class="sm:col-span-2"><span class="block text-[10px] font-black text-slate-700 dark:text-slate-400 mb-0.5">📝 Check</span><input type="number" id="split-create-check" class="w-full bg-white dark:bg-[#141818] border-2 border-slate-400 dark:border-white/[0.08] rounded text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-blue-600 transition-colors p-1.5" min="0" value="0"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="shrink-0 p-3 sm:p-4 pt-2 border-t-2 border-slate-200 dark:border-white/5 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] z-20">
+                    <div class="flex flex-col gap-0.5 pb-1">
+                        <div class="flex justify-between items-center text-[10px] sm:text-xs font-bold text-slate-500"><span>Items Subtotal</span><span id="pos-subtotal">₹0.00</span></div>
+                        <div class="flex justify-between items-center text-[10px] sm:text-xs font-bold text-slate-500"><span>Combined Taxes (GST)</span><span id="pos-tax">₹0.00</span></div>
+                    </div>
+                    <div class="flex justify-between items-center border-t-2 border-slate-200 dark:border-white/5 pt-1.5 mb-2">
+                        <span class="text-xs sm:text-sm font-black text-slate-700 dark:text-slate-400 uppercase tracking-widest">Grand Total</span>
+                        <span id="total-price" class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">₹0.00</span>
+                    </div>
+                    <button type="button" onclick="submitGrainOrder()" class="w-full bg-gradient-to-r from-blue-700 to-indigo-700 dark:from-amber-500 dark:to-amber-600 hover:from-blue-600 text-white dark:text-[#0e1111] font-black py-3 px-4 rounded-xl text-xs sm:text-sm uppercase tracking-widest shadow-xl active:scale-95 transition-all h-12">Commit & Print</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- WORKSPACE 9: EDIT INBOUND PURCHASE -->
+    <div id="menu-workspace-editpurchase" class="flex-1 p-3 md:p-4 overflow-y-auto lg:overflow-hidden hidden workspace-pane bg-slate-200 dark:bg-[#0e1111] print:hidden flex-col lg:flex-row gap-4 relative z-10">
+        <div class="w-full lg:w-2/3 flex flex-col gap-4 lg:overflow-y-auto">
+            <div class="bg-gradient-to-r from-slate-900 to-slate-800 dark:from-[#141818] dark:to-[#1b2020] text-white p-4 rounded-xl flex flex-col md:flex-row gap-3 items-end shadow-md border-2 border-slate-700 dark:border-white/[0.06] relative z-30">
+                <div class="flex-1 w-full">
+                    <label class="block text-[10px] font-black uppercase tracking-wider mb-1 text-slate-300 dark:text-slate-400">Select Purchase Record</label>
+                    <select id="editpur-target-id" class="w-full bg-slate-950 dark:bg-[#0e1111] border-2 border-slate-600 dark:border-white/[0.08] rounded-lg p-2 text-xs font-bold text-white cursor-pointer h-8"><option value="">-- Choose purchase to correct --</option>{% for p in purchases %}<option value="{{ p.id }}">Bill: {{ p.invoice_no }} | ID #{{ p.id }}</option>{% endfor %}</select>
+                </div>
+                <button type="button" onclick="loadPurchaseDataForEditing()" class="w-full md:w-auto bg-amber-600 hover:bg-amber-500 text-white font-black text-[10px] uppercase px-6 py-2 rounded-lg active:scale-95 h-8">Load Details</button>
+            </div>
+            <div class="bg-white dark:bg-[#141818] p-4 rounded-xl border-2 border-slate-300 dark:border-white/[0.06] shadow-md space-y-3 relative z-20">
+                <h3 class="text-[11px] font-black uppercase border-b-2 border-slate-200 dark:border-white/5 pb-2 text-slate-800 dark:text-slate-200">Supplier Invoice Info</h3>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="col-span-1"><label class="block text-[9px] uppercase mb-0.5 text-slate-800 dark:text-slate-400">Code</label><input type="text" id="editpur-seller-code" readonly class="w-full bg-slate-200 dark:bg-[#1b2020] rounded-lg px-2 py-1.5 text-xs font-mono font-black h-8 text-amber-700 dark:text-amber-500"></div>
+                    <div class="col-span-1 sm:col-span-2"><label class="block text-[9px] uppercase mb-0.5 text-slate-800 dark:text-slate-400">Name</label><input type="text" id="editpur-seller-name" class="w-full bg-white dark:bg-[#1b2020] border-2 border-slate-400 dark:border-white/[0.08] rounded-lg px-2 py-1.5 text-xs font-bold h-8 text-slate-900 dark:text-white"></div>
+                    <div class="col-span-2 sm:col-span-1"><label class="block text-[9px] uppercase mb-0.5 text-slate-800 dark:text-slate-400">Phone</label><input type="text" id="editpur-seller-phone" class="w-full bg-white dark:bg-[#1b2020] border-2 border-slate-400 dark:border-white/[0.08] rounded-lg px-2 py-1.5 text-xs font-mono font-bold h-8 text-slate-900 dark:text-white"></div>
+                    <div class="col-span-2 sm:col-span-4"><label class="block text-[9px] uppercase mb-0.5 text-slate-800 dark:text-slate-400">Address</label><input type="text" id="editpur-seller-address" class="w-full bg-white dark:bg-[#1b2020] border-2 border-slate-400 dark:border-white/[0.08] rounded-lg px-2 py-1.5 text-xs font-bold h-8 text-slate-900 dark:text-white"></div>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-[#141818] p-4 rounded-xl border-2 border-slate-300 dark:border-white/[0.06] shadow-md space-y-3 relative z-10">
+                <h3 class="text-[11px] font-black text-amber-700 dark:text-amber-500 uppercase border-b-2 border-slate-200 dark:border-white/5 pb-2">Append Item to Purchase</h3>
+                <div class="flex flex-col md:flex-row items-start gap-3">
+                    <div class="w-full md:w-1/4"><label class="block text-[10px] font-extrabold uppercase mb-1 text-slate-800 dark:text-slate-400">Code</label><input type="text" id="editpur-terminal-code" maxlength="3" oninput="checkGrainCode(this.value, 'editpurchase')" placeholder="Code" class="w-full bg-slate-100 dark:bg-[#1b2020] border-2 border-slate-400 dark:border-white/[0.08] rounded-lg p-2 text-center text-lg h-10 outline-none text-slate-900 dark:text-white"></div>
+                    <div class="w-full md:flex-1"><label class="block text-[10px] font-extrabold uppercase mb-1 text-slate-800 dark:text-slate-400">Preview</label><div id="editpur-item-preview-box" class="h-10 flex items-center bg-slate-100 dark:bg-[#1b2020] border-2 border-dashed border-slate-400 dark:border-white/[0.08] rounded-lg px-3 text-xs font-bold text-slate-600 dark:text-slate-400">Waiting...</div></div>
+                    <div class="w-full md:w-1/4"><label class="block text-[10px] font-extrabold uppercase mb-1 text-slate-800 dark:text-slate-400">Qty (kg)</label><input type="number" id="editpur-terminal-qty" value="100" disabled class="w-full bg-slate-200 dark:bg-[#0e1111] border-2 border-slate-300 dark:border-white/[0.04] rounded-lg p-2 text-center text-lg font-black text-slate-500 h-10 outline-none"></div>
+                </div>
+                <div class="flex justify-end pt-1"><button type="button" id="editpur-add-to-manifest-btn" onclick="processTerminalEntry('editpurchase')" disabled class="w-full md:w-auto bg-slate-300 dark:bg-[#1b2020] text-slate-500 font-black py-2 px-6 rounded-lg text-xs uppercase cursor-not-allowed h-10">Add To Bill</button></div>
+            </div>
+        </div>
+
+        <div class="w-full lg:w-1/3 bg-white dark:bg-[#141818] lg:border-t-0 lg:border-l-4 border-slate-300 dark:border-white/[0.06] shadow-2xl flex flex-col relative z-10 shrink-0 lg:h-full lg:overflow-hidden min-h-[500px] lg:min-h-0">
+            <div class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div class="p-3 sm:p-4 pb-2 shrink-0 border-b-2 border-slate-200 dark:border-white/5 mx-3 sm:mx-4 mt-3">
+                    <h2 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Adjusted Purchase Bill</h2>
+                </div>
+                <div id="editpur-manifest-container" class="flex-1 overflow-y-auto px-3 sm:px-4 py-2 space-y-2 min-h-[80px]">
+                    <p class="text-xs text-center py-10 font-bold text-slate-500">Please load a purchase record...</p>
+                </div>
+            </div>
+            <div class="shrink-0 flex flex-col bg-slate-100 dark:bg-[#0e1111] border-t-2 border-slate-300 dark:border-white/5">
+                <div class="p-3 sm:p-4 pt-3 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] z-20">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-400">Adjusted Total</span>
+                        <span id="editpur-total-price" class="text-2xl font-black text-amber-700 dark:text-amber-500">₹0.00</span>
+                    </div>
+                    <button type="button" onclick="submitModifiedPurchase()" class="w-full bg-slate-900 dark:bg-amber-500 hover:bg-slate-800 dark:hover:bg-amber-400 text-white dark:text-[#0e1111] font-black py-3 px-4 rounded-xl text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all h-12 border shrink-0 border-black dark:border-transparent">Save Purchase Overwrites</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- WORKSPACE 3.5: SETTLE PENDING DUES -->
+    <div id="menu-workspace-pending" class="flex-1 p-3 md:p-4 overflow-y-auto lg:overflow-hidden hidden workspace-pane bg-slate-200 dark:bg-[#0e1111] print:hidden flex-col lg:flex-row gap-4 relative z-10">
+        <div class="w-full lg:w-1/2 flex flex-col gap-4 lg:overflow-y-auto pr-0 lg:pr-2">
+            <div class="bg-gradient-to-r from-slate-900 to-slate-800 dark:from-[#141818] dark:to-[#1b2020] text-white p-4 rounded-xl flex flex-col lg:flex-row justify-between lg:items-center shadow-md border-2 border-slate-700 dark:border-white/[0.06] gap-3">
+                <div class="flex-1 w-full lg:w-auto"><h2 class="text-sm sm:text-base font-black">⏳ Pending Dues</h2></div>
+                <div class="flex-1 w-full lg:w-auto"><input type="text" id="pending-search-input" oninput="filterPendingOrders()" placeholder="🔍 Search..." class="w-full bg-slate-950 dark:bg-[#0e1111] border-2 border-slate-600 dark:border-white/[0.08] rounded-lg px-2 py-1.5 text-xs outline-none h-8 text-white"></div>
+                <button type="button" onclick="loadPendingOrders()" class="w-full lg:w-auto bg-amber-600 dark:bg-amber-500 text-white dark:text-[#0e1111] font-black text-[10px] uppercase px-4 py-1.5 rounded-lg active:scale-95 h-8 border border-amber-400 dark:border-transparent">🔄 Refresh</button>
+            </div>
+            <div id="pending-list-container" class="space-y-2 pb-4"><p class="text-xs text-center py-10 font-bold text-slate-500">Click refresh to load.</p></div>
+        </div>
+        
+        <div class="w-full lg:w-1/2 bg-white dark:bg-[#141818] border-2 border-slate-300 dark:border-white/[0.06] rounded-xl shadow-2xl flex flex-col justify-between hidden shrink-0 lg:h-full lg:overflow-hidden min-h-[500px] lg:min-h-0" id="pending-detail-panel">
+            <div class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div class="p-4 shrink-0 border-b-2 border-slate-200 dark:border-white/5 mx-2 mt-2">
+                    <h2 class="text-lg font-black font-mono text-slate-900 dark:text-white" id="pending-detail-invoice">INV-123</h2>
+                    <p class="text-xs font-extrabold mt-1 text-slate-700 dark:text-slate-300" id="pending-detail-name">Name</p>
+                    <p class="text-[10px] font-mono font-bold mt-0.5 text-slate-500 dark:text-slate-400" id="pending-detail-phone">Phone</p>
+                </div>
+                <div class="flex-1 overflow-y-auto p-4 space-y-2">
+                    <h3 class="text-[9px] font-black uppercase text-slate-500 dark:text-slate-400 mb-2">Itemized Details</h3>
+                    <div id="pending-detail-items" class="space-y-1.5"></div>
+                </div>
+            </div>
+            
+            <div class="shrink-0 flex flex-col bg-slate-100 dark:bg-[#0e1111] border-t-2 border-slate-300 dark:border-white/5 max-h-[60vh] lg:max-h-[55vh]">
+                <div class="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
+                    <div class="flex justify-between items-center pb-2 border-b-2 border-slate-200 dark:border-white/5">
+                        <span class="text-[10px] font-black uppercase text-slate-700 dark:text-slate-400">Total Due</span>
+                        <span id="pending-detail-total" class="text-2xl font-black text-rose-600 dark:text-rose-500">₹0.00</span>
+                    </div>
+                    <div>
+                        <label class="block text-[9px] font-black uppercase mb-1 text-slate-700 dark:text-slate-400">Settle Via</label>
+                        <select id="pending-settle-method" onchange="toggleSplitPanel('pending')" class="w-full bg-white dark:bg-[#1b2020] border-2 border-slate-400 dark:border-white/[0.08] rounded-lg p-2 text-xs font-bold text-slate-900 dark:text-white cursor-pointer h-10 outline-none">
+                            <option value="Cash">💵 Cash</option><option value="UPI">📱 UPI</option><option value="Card">💳 Card</option><option value="Net Banking">🏦 Bank</option><option value="Check">📝 Check</option><option value="Split">🔀 Split Payment</option>
+                        </select>
+                        <div id="pending-split-panel" class="hidden mt-2 p-2 bg-slate-200 dark:bg-[#1b2020] border-2 border-slate-300 dark:border-white/[0.06] rounded-lg grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div><span class="block text-[9px] font-black mb-0.5 text-slate-700 dark:text-slate-400">💵 Cash</span><input type="number" id="split-pending-cash" class="w-full bg-white dark:bg-[#141818] border-2 border-slate-400 dark:border-white/[0.08] text-slate-900 dark:text-white rounded p-1.5 text-xs font-bold outline-none" min="0" value="0"></div>
+                            <div><span class="block text-[9px] font-black mb-0.5 text-slate-700 dark:text-slate-400">📱 UPI</span><input type="number" id="split-pending-upi" class="w-full bg-white dark:bg-[#141818] border-2 border-slate-400 dark:border-white/[0.08] text-slate-900 dark:text-white rounded p-1.5 text-xs font-bold outline-none" min="0" value="0"></div>
+                            <div><span class="block text-[9px] font-black mb-0.5 text-slate-700 dark:text-slate-400">💳 Card</span><input type="number" id="split-pending-card" class="w-full bg-white dark:bg-[#141818] border-2 border-slate-400 dark:border-white/[0.08] text-slate-900 dark:text-white rounded p-1.5 text-xs font-bold outline-none" min="0" value="0"></div>
+                            <div><span class="block text-[9px] font-black mb-0.5 text-slate-700 dark:text-slate-400">🏦 Bank</span><input type="number" id="split-pending-bank" class="w-full bg-white dark:bg-[#141818] border-2 border-slate-400 dark:border-white/[0.08] text-slate-900 dark:text-white rounded p-1.5 text-xs font-bold outline-none" min="0" value="0"></div>
+                            <div class="sm:col-span-2"><span class="block text-[9px] font-black mb-0.5 text-slate-700 dark:text-slate-400">📝 Check</span><input type="number" id="split-pending-check" class="w-full bg-white dark:bg-[#141818] border-2 border-slate-400 dark:border-white/[0.08] text-slate-900 dark:text-white rounded p-1.5 text-xs font-bold outline-none" min="0" value="0"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="shrink-0 p-4 pt-2 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] z-20">
+                    <input type="hidden" id="pending-settle-id">
+                    <button type="button" onclick="settlePendingPayment()" class="w-full bg-emerald-600 dark:bg-amber-500 hover:bg-emerald-500 dark:hover:bg-amber-400 text-white dark:text-[#0e1111] font-black py-3 rounded-xl text-[10px] uppercase active:scale-95 h-10 border border-emerald-700 dark:border-transparent">✅ Mark Paid</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- WORKSPACE 4: CUSTOMER HUB -->
+    <div id="menu-workspace-addcust" class="flex-1 p-3 sm:p-4 md:p-8 overflow-y-auto lg:overflow-hidden hidden workspace-pane bg-slate-200 dark:bg-[#0e1111] print:hidden flex-col lg:flex-row gap-4 relative z-10">
+        <div class="w-full lg:w-1/2 bg-white dark:bg-[#141818] p-4 sm:p-6 rounded-xl border-2 border-slate-300 dark:border-white/[0.06] shadow-md flex flex-col h-full lg:overflow-y-auto">
+            <div class="border-b-2 border-slate-200 dark:border-white/5 pb-2 mb-3"><h2 class="text-sm font-black text-slate-900 dark:text-white">🔍 Live Customer Engine Search</h2></div>
+            <div class="flex gap-2 mb-3"><input type="text" id="hub-search-input" oninput="executeLiveCustomerHubSearch(this.value)" placeholder="Type Name or Code..." class="flex-1 bg-slate-100 dark:bg-[#1b2020] border-2 border-slate-400 dark:border-white/[0.08] rounded-lg px-2 py-1.5 text-xs font-bold h-9 text-slate-900 dark:text-white outline-none focus:border-blue-600 dark:focus:border-amber-500"></div>
+            <div id="hub-search-results" class="flex-1 overflow-y-auto space-y-2"><p class="text-[10px] text-center py-10 font-bold text-slate-500 dark:text-slate-400">Awaiting input...</p></div>
+        </div>
+        <div class="w-full lg:w-1/2 bg-white dark:bg-[#141818] p-4 sm:p-6 rounded-xl border-2 border-slate-300 dark:border-white/[0.06] shadow-md h-fit lg:overflow-y-auto">
+            <div class="border-b-2 border-slate-200 dark:border-white/5 pb-2 mb-3"><h2 id="hub-form-title" class="text-sm font-black text-slate-900 dark:text-white">👥 Register Client</h2></div>
+            <input type="hidden" id="hub-edit-mode-code" value="">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="sm:col-span-2"><label class="block text-[9px] font-extrabold uppercase mb-0.5 text-slate-800 dark:text-slate-400">Full Name</label><input type="text" id="new-cust-name" class="w-full bg-slate-50 dark:bg-[#1b2020] border-2 border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-lg p-1.5 px-2 text-xs font-bold h-8 outline-none focus:border-blue-600 dark:focus:border-amber-500"></div>
+                <div><label class="block text-[9px] font-extrabold uppercase mb-0.5 text-slate-800 dark:text-slate-400">Phone Number</label><input type="text" id="new-cust-phone" class="w-full bg-slate-50 dark:bg-[#1b2020] border-2 border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-lg p-1.5 px-2 text-xs font-bold h-8 outline-none focus:border-blue-600 dark:focus:border-amber-500"></div>
+                <div><label class="block text-[9px] font-extrabold uppercase mb-0.5 text-slate-800 dark:text-slate-400">Email</label><input type="email" id="new-cust-email" class="w-full bg-slate-50 dark:bg-[#1b2020] border-2 border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-lg p-1.5 px-2 text-xs font-bold h-8 outline-none focus:border-blue-600 dark:focus:border-amber-500"></div>
+                <div class="sm:col-span-2"><label class="block text-[9px] font-extrabold uppercase mb-0.5 text-slate-800 dark:text-slate-400">Street Address</label><input type="text" id="new-cust-street" class="w-full bg-slate-50 dark:bg-[#1b2020] border-2 border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-lg p-1.5 px-2 text-xs font-bold h-8 outline-none focus:border-blue-600 dark:focus:border-amber-500"></div>
+                <div class="sm:col-span-2">
+                    <label class="block text-[9px] font-extrabold uppercase mb-0.5 text-slate-800 dark:text-slate-400">Delivery Area / Zone</label>
+                    <select id="new-cust-area" class="w-full bg-slate-50 dark:bg-[#1b2020] border-2 border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-lg p-1.5 px-2 text-xs font-bold h-8 outline-none focus:border-blue-600 dark:focus:border-amber-500 cursor-pointer">
+                        <option value="">-- Select Area --</option>
+                        {% for area in areas %}<option value="{{ area.id }}">{{ area.name }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="sm:col-span-2 mt-1"><button type="button" id="hub-form-btn" onclick="submitStandaloneCustomer()" class="w-full bg-blue-600 dark:bg-amber-500 text-white dark:text-[#0e1111] font-black text-[10px] uppercase py-2 rounded-lg shadow-lg active:scale-95 h-10 border border-blue-700 dark:border-transparent transition-all">Save Profile</button></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- WORKSPACE 5: LEDGER RECORDS LOOKUP -->
+    <div id="menu-workspace-lookup" class="flex-1 p-3 sm:p-4 md:p-8 overflow-y-auto hidden workspace-pane bg-slate-200 dark:bg-[#0e1111] print:hidden flex-col">
+        <div class="max-w-4xl mx-auto w-full bg-white dark:bg-[#141818] p-4 sm:p-6 rounded-2xl border-2 border-slate-300 dark:border-white/[0.06] shadow-xl space-y-4">
+            <div class="flex flex-col sm:flex-row justify-between border-b-2 border-slate-200 dark:border-white/5 pb-4 gap-3">
+                <div><h2 class="text-base sm:text-xl font-black text-slate-900 dark:text-white">🔍 Customer Ledger Lookup</h2></div>
+                <div class="flex flex-col gap-2">
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="filter-lookup-code" placeholder="Client Code" class="flex-1 bg-slate-100 dark:bg-[#1b2020] border-2 border-slate-400 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm font-mono h-10 outline-none focus:border-blue-600 dark:focus:border-amber-500">
+                        <button type="button" onclick="filterLookupOrdersByCode()" class="bg-slate-900 dark:bg-amber-500 text-white dark:text-[#0e1111] font-black text-[10px] uppercase px-4 py-2.5 rounded-lg active:scale-95 h-10 border border-black dark:border-transparent transition-colors">Find</button>
+                        <button type="button" onclick="resetLookupFilter()" class="bg-slate-300 dark:bg-[#1b2020] text-slate-800 dark:text-slate-300 font-black text-[10px] uppercase px-3 py-2.5 rounded-lg active:scale-95 h-10 border border-slate-400 dark:border-white/[0.08] transition-colors">Reset</button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="filter-lookup-invoice" placeholder="INV-..." class="flex-1 bg-slate-100 dark:bg-[#1b2020] border-2 border-blue-300 dark:border-amber-500/30 text-blue-900 dark:text-amber-400 rounded-lg px-3 py-2 text-sm font-mono h-10 outline-none focus:border-blue-600 dark:focus:border-amber-500">
+                        <button type="button" onclick="filterLookupOrdersByInvoice()" class="bg-blue-600 dark:bg-amber-500 text-white dark:text-[#0e1111] font-black text-[10px] uppercase px-4 py-2.5 rounded-lg active:scale-95 w-full sm:w-[95px] h-10 border border-blue-700 dark:border-transparent transition-colors">Bill</button>
+                    </div>
+                </div>
+            </div>
+            <div class="space-y-3">
+                <label class="block text-[10px] font-extrabold uppercase text-slate-800 dark:text-slate-400">Select Target Order</label>
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <select id="lookup-order-select" onchange="populateOrderDetailsView(this.value)" class="w-full sm:flex-1 bg-slate-100 dark:bg-[#1b2020] border-2 border-slate-400 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-lg p-2.5 text-sm font-bold h-10 outline-none cursor-pointer focus:border-blue-600 dark:focus:border-amber-500">
+                        <option value="">-- Choose sequence --</option>
+                        {% for order in orders %}<option value="{{ order.id }}" data-custcode="{{ order.customer_code }}" data-invoiceno="{{ order.invoice_no }}">{{ order.invoice_no }} | {{ order.customer_name }}</option>{% endfor %}
+                    </select>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="printArchivedReceipt()" class="flex-1 bg-slate-900 dark:bg-amber-500 text-white dark:text-[#0e1111] font-black text-[10px] uppercase px-4 py-2 rounded-lg active:scale-95 h-10 border border-black dark:border-transparent transition-colors">🖨 Reprint</button>
+                        <button type="button" onclick="downloadPDFReceipt()" class="flex-1 bg-rose-600 text-white font-black text-[10px] uppercase px-4 py-2 rounded-lg active:scale-95 h-10 border border-rose-700 transition-colors">📥 PDF</button>
+                    </div>
+                </div>
+            </div>
+            <div id="lookup-display-box" class="bg-slate-100 dark:bg-[#0e1111] p-4 sm:p-6 rounded-xl border-2 border-slate-300 dark:border-white/5 shadow-inner hidden space-y-4 animate-fade-up">
+                <div class="flex justify-between border-b-2 border-slate-300 dark:border-white/5 pb-3">
+                    <div><h3 id="view-receipt-id" class="text-base sm:text-lg font-black font-mono text-slate-900 dark:text-white">BILL: ---</h3><p id="view-receipt-cust-code" class="text-[10px] font-mono font-black text-blue-700 dark:text-amber-500 mt-1">CUST: ------</p></div>
+                    <div class="text-right"><span class="text-[9px] font-black uppercase mb-0.5 text-slate-500 dark:text-slate-400">Total</span><span id="view-receipt-total" class="text-xl sm:text-2xl font-black text-emerald-600 dark:text-amber-500">₹0.00</span></div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs sm:text-sm border-b-2 border-slate-300 dark:border-white/5 pb-4">
+                    <div><span class="text-[9px] font-black uppercase mb-1 block text-slate-500 dark:text-slate-400">Customer</span><p id="view-receipt-name" class="font-black text-sm text-slate-900 dark:text-white">---</p><p id="view-receipt-email" class="font-bold text-xs mt-0.5 text-slate-600 dark:text-slate-400">---</p></div>
+                    <div><span class="text-[9px] font-black uppercase mb-1 block text-slate-500 dark:text-slate-400">Phone / Payment</span><p class="font-black font-mono text-sm text-slate-800 dark:text-slate-200"><span id="view-receipt-phone">---</span> // <span id="view-receipt-method" class="text-blue-700 dark:text-amber-500">Cash</span></p></div>
+                    <div class="sm:col-span-2"><span class="text-[9px] font-black uppercase mb-1 block text-slate-500 dark:text-slate-400">Destination</span><p id="view-receipt-address" class="font-bold bg-white dark:bg-[#1b2020] p-2 rounded-lg border-2 border-slate-300 dark:border-white/[0.08] mt-1 text-slate-900 dark:text-slate-300">---</p></div>
+                </div>
+                <div><span class="text-[9px] font-black uppercase mb-2 block text-slate-500 dark:text-slate-400">Ledger</span><div id="view-receipt-items-container" class="space-y-2"></div></div>
+                <div id="view-receipt-history-box" class="hidden mt-4 border-t-4 border-dashed border-slate-300 dark:border-white/[0.08] pt-4"><span class="text-[10px] font-black text-amber-700 dark:text-amber-500 uppercase mb-2 block">⚠️ Audit Trail</span><div id="view-receipt-history-container" class="space-y-2"></div></div>
+            </div>
+            <p id="lookup-placeholder-msg" class="text-slate-500 dark:text-slate-400 text-center py-10 text-xs font-bold">Pick transaction to view.</p>
+        </div>
+    </div>
+
+    <!-- WORKSPACE 6: STOCK ROOM -->
+    <div id="menu-workspace-stock" class="flex-1 p-3 sm:p-4 md:p-8 overflow-y-auto hidden workspace-pane bg-slate-200 dark:bg-[#0e1111] print:hidden flex-col">
+        <div class="max-w-4xl mx-auto w-full bg-white dark:bg-[#141818] p-4 sm:p-6 rounded-2xl border-2 border-slate-300 dark:border-white/[0.06] shadow-xl space-y-4 sm:space-y-6">
+            <div><h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white">📦 Storage Adjustments</h2></div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="bg-slate-100 dark:bg-[#1b2020] p-4 rounded-xl border-2 border-slate-300 dark:border-white/[0.06] shadow-inner space-y-3">
+                    <h3 class="text-xs font-black text-blue-700 dark:text-amber-500 uppercase border-b-2 border-slate-300 dark:border-white/5 pb-2">Direct Overwrite</h3>
+                    <div><label class="block text-[10px] font-extrabold uppercase mb-1 text-slate-800 dark:text-slate-400">Target</label><select id="stock-adjust-code" class="w-full bg-white dark:bg-[#141818] border-2 border-slate-400 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-lg p-2 text-xs font-bold h-10 outline-none cursor-pointer focus:border-blue-600 dark:focus:border-amber-500 transition-colors"><option value="">-- Code --</option>{% for grain in grains %}<option value="{{ grain.code }}">{{ grain.code }} — {{ grain.name }}</option>{% endfor %}</select></div>
+                    <div><label class="block text-[10px] font-extrabold uppercase mb-1 text-slate-800 dark:text-slate-400">New Volume (kg)</label><input type="number" id="stock-adjust-value" class="w-full bg-white dark:bg-[#141818] border-2 border-slate-400 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-lg p-2 text-xs font-black h-10 outline-none focus:border-blue-600 dark:focus:border-amber-500 transition-colors"></div>
+                    <button type="button" onclick="submitStockOverwrite()" class="w-full bg-blue-600 dark:bg-amber-500 text-white dark:text-[#0e1111] font-black text-[10px] uppercase py-2.5 rounded-lg active:scale-95 h-10 border border-blue-700 dark:border-transparent transition-all">Force Save Level</button>
+                </div>
+                <div class="bg-rose-50 dark:bg-rose-950/20 p-4 rounded-xl border-2 border-rose-200 dark:border-rose-900/30 shadow-inner space-y-3">
+                    <h3 class="text-xs font-black text-rose-700 dark:text-rose-500 uppercase border-b-2 border-rose-200 dark:border-rose-900/50 pb-2">Log Spoilage</h3>
+                    <div><label class="block text-[10px] font-extrabold uppercase mb-1 text-slate-800 dark:text-slate-400">Lost Commodity</label><select id="writeoff-code" class="w-full bg-white dark:bg-[#141818] border-2 border-rose-300 dark:border-rose-900/50 text-slate-900 dark:text-white rounded-lg p-2 text-xs font-bold h-10 outline-none cursor-pointer focus:border-rose-600 transition-colors"><option value="">-- Code --</option>{% for grain in grains %}<option value="{{ grain.code }}">{{ grain.code }} — {{ grain.name }}</option>{% endfor %}</select></div>
+                    <div class="flex gap-2">
+                        <div class="flex-1"><label class="block text-[10px] font-extrabold uppercase mb-1 text-slate-800 dark:text-slate-400">Amount (kg)</label><input type="number" id="writeoff-qty" class="w-full bg-white dark:bg-[#141818] border-2 border-rose-300 dark:border-rose-900/50 text-slate-900 dark:text-white rounded-lg p-2 text-xs font-black h-10 outline-none focus:border-rose-600 transition-colors"></div>
+                        <div class="flex-1"><label class="block text-[10px] font-extrabold uppercase mb-1 text-slate-800 dark:text-slate-400">Reason</label><select id="writeoff-reason" class="w-full bg-white dark:bg-[#141818] border-2 border-rose-300 dark:border-rose-900/50 text-slate-900 dark:text-white rounded-lg p-2 text-xs font-bold h-10 outline-none cursor-pointer focus:border-rose-600 transition-colors"><option value="Moisture/Rot">Moisture</option><option value="Pest Damage">Pest</option><option value="Transit Spill">Spill</option><option value="Theft/Missing">Theft</option></select></div>
+                    </div>
+                    <button type="button" onclick="submitStockWriteOff()" class="w-full bg-rose-600 text-white font-black text-[10px] uppercase py-2.5 rounded-lg active:scale-95 h-10 border border-rose-700 transition-all">Deduct & Log</button>
+                </div>
+            </div>
+            <div class="border-2 border-slate-300 dark:border-white/[0.06] rounded-xl overflow-x-auto shadow-sm bg-white dark:bg-[#141818] hide-scrollbar">
+                <div class="min-w-[500px]">
+                    <div class="grid grid-cols-3 bg-slate-200 dark:bg-[#1b2020] p-3 font-black text-[10px] sm:text-xs uppercase border-b-2 border-slate-300 dark:border-white/[0.06] text-slate-700 dark:text-slate-300"><div>Grain Code</div><div>Name</div><div class="text-right">Storage Status</div></div>
+                    <div class="divide-y-2 divide-slate-100 dark:divide-white/5">
+                        {% for grain in grains %}
+                        <div class="grid grid-cols-3 p-3 sm:p-4 hover:bg-slate-50 dark:hover:bg-white/[0.02] items-center transition-colors">
+                            <span class="font-mono font-black text-blue-700 dark:text-amber-500 text-xs sm:text-sm">{{ grain.code }}</span>
+                            <span class="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-slate-200">{{ grain.name }}</span>
+                            <span class="text-right font-mono font-black text-xs sm:text-sm {% if grain.stock_kg < 1000 %}text-rose-700 dark:text-rose-400 bg-rose-100 dark:bg-rose-500/10 px-2 py-1 rounded-lg border border-rose-300 dark:border-rose-500/20 shadow-sm{% else %}text-emerald-700 dark:text-emerald-400{% endif %}">
+                                {{ "{:,.0f}".format(grain.stock_kg) }} kg
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="max-w-4xl mx-auto w-full bg-white dark:bg-[#141818] p-4 sm:p-6 rounded-2xl border-2 border-slate-300 dark:border-white/[0.06] shadow-xl mt-4 sm:mt-6">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-xs sm:text-sm font-black uppercase text-slate-800 dark:text-slate-200">Daily Stock Summary</h3>
+                <button type="button" onclick="generateDailyStockSummary()" class="bg-emerald-600 dark:bg-amber-500 text-white dark:text-[#0e1111] font-black text-[10px] uppercase py-2 px-3 rounded-lg active:scale-95 h-9 transition-all">Generate EOD</button>
+            </div>
+            <div id="daily-stock-output" class="overflow-x-auto hide-scrollbar"><p class="text-xs font-bold text-slate-400 text-center py-4">Click generate...</p></div>
+        </div>
+    </div>
+
+    <!-- FLATTENED ERP WORKSPACES -->
+    <div id="menu-workspace-erp-customers" class="flex-1 p-3 sm:p-4 md:p-8 overflow-y-auto hidden workspace-pane bg-slate-200 dark:bg-[#0e1111] print:hidden">
+        <div class="max-w-6xl mx-auto space-y-4">
+            <h2 class="text-base md:text-lg font-black text-slate-900 dark:text-white">Customer Directory</h2>
+            <div class="bg-white dark:bg-[#141818] rounded-xl shadow-md border-2 border-slate-300 dark:border-white/[0.06] overflow-hidden"><div class="overflow-x-auto hide-scrollbar"><table class="w-full text-left text-[10px] sm:text-xs whitespace-nowrap"><thead class="bg-slate-200 dark:bg-[#1b2020] uppercase font-black text-slate-700 dark:text-slate-300"><tr><th class="p-3">Code</th><th class="p-3">Name</th><th class="p-3">Phone</th>{% if (session.get('role') or '').lower() in ['admin', 'owner'] %}<th class="p-3 text-right">Action</th>{% endif %}</tr></thead><tbody class="divide-y-2 divide-slate-100 dark:divide-white/5">
+                {% for c in customers %}
+                <tr class="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors"><td class="p-3 font-mono font-black text-blue-700 dark:text-amber-500">{{ c.code }}</td><td class="p-3 font-extrabold text-slate-900 dark:text-slate-200">{{ c.name }}</td><td class="p-3 font-bold text-slate-600 dark:text-slate-400">{{ c.phone }}</td>
+                    {% if (session.get('role') or '').lower() in ['admin', 'owner'] %}
+                    <td class="p-3 text-right"><button onclick="deleteCustomerProfile('{{ c.code }}')" class="text-rose-600 bg-rose-100 dark:bg-rose-500/10 dark:text-rose-400 font-black uppercase text-[9px] px-2 py-1 rounded border border-rose-300 dark:border-rose-500/20 active:scale-95 transition-colors">❌</button></td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody></table></div></div>
+        </div>
+    </div>
+    
+    <div id="menu-workspace-erp-suppliers" class="flex-1 p-3 sm:p-4 md:p-8 overflow-y-auto hidden workspace-pane bg-slate-200 dark:bg-[#0e1111] print:hidden">
+        <div class="max-w-6xl mx-auto space-y-4">
+            <h2 class="text-base md:text-lg font-black text-slate-900 dark:text-white">Supplier Network</h2>
+            <div class="bg-white dark:bg-[#141818] rounded-xl shadow-md border-2 border-slate-300 dark:border-white/[0.06] overflow-hidden"><div class="overflow-x-auto hide-scrollbar"><table class="w-full text-left text-[10px] sm:text-xs whitespace-nowrap"><thead class="bg-slate-200 dark:bg-[#1b2020] uppercase font-black text-slate-700 dark:text-slate-300"><tr><th class="p-3">Code</th><th class="p-3">Name</th><th class="p-3">Phone</th><th class="p-3 text-center">Action</th></tr></thead><tbody class="divide-y-2 divide-slate-100 dark:divide-white/5">
+                {% for s in suppliers %}
+                <tr class="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors"><td class="p-3 font-mono font-black text-amber-700 dark:text-amber-500">{{ s.code }}</td><td class="p-3 font-extrabold text-slate-900 dark:text-slate-200">{{ s.name }}</td><td class="p-3 font-bold text-slate-600 dark:text-slate-400">{{ s.phone }}</td><td class="p-3 text-center"><button type="button" onclick="switchTabWorkspace('purchase'); document.getElementById('pur-cust-search').value = '{{ s.code }}'; runLiveBarSearch('{{ s.code }}', 'pur');" class="bg-amber-100 dark:bg-amber-500/10 text-amber-800 dark:text-amber-400 border border-amber-300 dark:border-amber-500/20 px-2 py-1 rounded font-black text-[9px] uppercase active:scale-95 transition-colors">✏️</button></td></tr>
+                {% endfor %}
+            </tbody></table></div></div>
+        </div>
+    </div>
+
+    {% if (session.get('role') or '').lower() in ['admin', 'manager', 'owner'] %}
+    <div id="menu-workspace-erp-employees" class="flex-1 p-3 sm:p-4 md:p-8 overflow-y-auto hidden workspace-pane bg-slate-200 dark:bg-[#0e1111] print:hidden">
+        <div class="max-w-6xl mx-auto space-y-4">
+            <div class="flex justify-between items-center"><h2 class="text-base md:text-lg font-black text-slate-900 dark:text-white">Employee Mgmt</h2><button type="button" onclick="switchTabWorkspace('adminsetup')" class="bg-indigo-600 dark:bg-amber-500 text-white dark:text-[#0e1111] px-3 py-1.5 rounded-lg font-black text-[9px] uppercase active:scale-95 h-8 transition-all border border-indigo-700 dark:border-transparent">➕ Staff</button></div>
+            <div class="bg-white dark:bg-[#141818] rounded-xl shadow-md border-2 border-slate-300 dark:border-white/[0.06] overflow-hidden"><div class="overflow-x-auto hide-scrollbar"><table class="w-full text-left text-[10px] sm:text-xs whitespace-nowrap"><thead class="bg-slate-200 dark:bg-[#1b2020] uppercase font-black text-slate-700 dark:text-slate-300"><tr><th class="p-3">ID</th><th class="p-3">Name</th><th class="p-3">Role</th><th class="p-3">User</th><th class="p-3 text-right">Action</th></tr></thead><tbody class="divide-y-2 divide-slate-100 dark:divide-white/5">
+                {% for e in employees %}
+                <tr class="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors"><td class="p-3 font-mono font-black text-indigo-700 dark:text-amber-500">{{ e.code }}</td><td class="p-3 font-extrabold text-slate-900 dark:text-slate-200">{{ e.name }}</td><td class="p-3"><span class="bg-slate-200 dark:bg-[#1b2020] text-slate-800 dark:text-slate-300 px-2 py-0.5 rounded text-[9px] font-black border border-slate-300 dark:border-white/[0.08]">{{ e.role }}</span></td><td class="p-3 font-mono font-bold text-slate-500 dark:text-slate-400">{{ e.username or 'N/A' }}</td><td class="p-3 text-right space-x-1">{% if (session.get('role') or '').lower() in ['admin', 'owner'] %}<button type="button" onclick="loadEmployeeForEdit('{{ e.code }}', '{{ e.name | escape }}', '{{ e.role | escape }}', '{{ e.username | escape }}', '{{ e.phone | escape }}')" class="bg-blue-100 dark:bg-blue-500/10 text-blue-800 dark:text-blue-400 px-2 py-1 rounded font-black text-[9px] uppercase transition-colors">✏️</button><button type="button" onclick="deleteEmployee('{{ e.code }}')" class="bg-rose-100 dark:bg-rose-500/10 text-rose-800 dark:text-rose-400 px-2 py-1 rounded font-black text-[9px] uppercase transition-colors">❌</button>{% else %}<span class="text-[8px] text-slate-400 font-bold uppercase tracking-widest">Restricted</span>{% endif %}</td></tr>
+                {% endfor %}
+            </tbody></table></div></div>
+        </div>
+    </div>
+    
+    <div id="menu-workspace-erp-payments" class="flex-1 p-3 sm:p-4 md:p-8 overflow-y-auto hidden workspace-pane bg-slate-200 dark:bg-[#0e1111] print:hidden">
+        <div class="max-w-6xl mx-auto space-y-4">
+            <h2 class="text-base md:text-lg font-black text-slate-900 dark:text-white">Payment Ledger</h2>
+            <div class="bg-white dark:bg-[#141818] rounded-xl shadow-md border-2 border-slate-300 dark:border-white/[0.06] overflow-hidden"><div class="overflow-x-auto hide-scrollbar"><table class="w-full text-left text-[10px] sm:text-xs whitespace-nowrap"><thead class="bg-slate-200 dark:bg-[#1b2020] uppercase font-black text-slate-700 dark:text-slate-300"><tr><th class="p-3">Time</th><th class="p-3">Ref</th><th class="p-3">Type</th><th class="p-3">Method</th><th class="p-3">Amount</th></tr></thead><tbody class="divide-y-2 divide-slate-100 dark:divide-white/5">
+                {% for p in payments %}
+                <tr class="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors"><td class="p-3 font-mono text-slate-600 dark:text-slate-400 font-bold">{{ p.date }}</td><td class="p-3 font-mono font-black text-slate-900 dark:text-slate-200">{{ p.ref }}</td><td class="p-3"><span class="px-2 py-0.5 rounded text-[9px] uppercase font-black border {% if p.flow == 'IN' %}bg-emerald-100 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-400 border-emerald-300 dark:border-emerald-500/20{% else %}bg-rose-100 dark:bg-rose-500/10 text-rose-800 dark:text-rose-400 border-rose-300 dark:border-rose-500/20{% endif %}">{{ p.flow }}</span></td><td class="p-3 font-bold text-slate-700 dark:text-slate-400">{{ p.method }}</td><td class="p-3 font-black text-xs sm:text-sm text-slate-900 dark:text-white">₹{{ "{:,.2f}".format(p.amount) }}</td></tr>
+                {% endfor %}
+            </tbody></table></div></div>
+        </div>
+    </div>
+
+    <div id="menu-workspace-erp-expenses" class="flex-1 p-3 sm:p-4 md:p-8 overflow-y-auto hidden workspace-pane bg-slate-200 dark:bg-[#0e1111] print:hidden">
+        <div class="max-w-6xl mx-auto space-y-4">
+            <h2 class="text-base md:text-lg font-black text-slate-900 dark:text-white">Operational Expenses</h2>
+            <div class="bg-slate-100 dark:bg-[#1b2020] p-4 rounded-xl border-2 border-slate-300 dark:border-white/[0.06] shadow-inner mb-4 flex flex-col md:flex-row gap-3 items-end">
+                <div class="flex-1"><label class="block text-[10px] font-extrabold uppercase mb-1 text-slate-800 dark:text-slate-400">Category</label><select id="expense-category" class="w-full bg-white dark:bg-[#141818] border-2 border-slate-400 dark:border-white/[0.08] rounded-lg p-2 text-xs font-bold h-10 outline-none focus:border-rose-500 text-slate-900 dark:text-white"><option value="Rent/Lease">Rent/Lease</option><option value="Electricity/Utilities">Utilities</option><option value="Transport/Fuel">Transport</option><option value="Labor/Salaries">Labor</option><option value="Maintenance">Maintenance</option><option value="Other">Other</option></select></div>
+                <div class="flex-1"><label class="block text-[10px] font-extrabold uppercase mb-1 text-slate-800 dark:text-slate-400">Amount (₹)</label><input type="number" id="expense-amount" class="w-full bg-white dark:bg-[#141818] border-2 border-slate-400 dark:border-white/[0.08] rounded-lg p-2 text-xs font-black h-10 outline-none focus:border-rose-500 text-slate-900 dark:text-white"></div>
+                <div class="flex-1"><label class="block text-[10px] font-extrabold uppercase mb-1 text-slate-800 dark:text-slate-400">Notes</label><input type="text" id="expense-notes" class="w-full bg-white dark:bg-[#141818] border-2 border-slate-400 dark:border-white/[0.08] rounded-lg p-2 text-xs font-bold h-10 outline-none focus:border-rose-500 text-slate-900 dark:text-white"></div>
+                <button type="button" onclick="submitExpense()" class="bg-rose-600 text-white font-black text-[10px] uppercase px-6 rounded-lg active:scale-95 h-10 border border-rose-700 transition-all">Log Expense</button>
+            </div>
+            <div class="bg-white dark:bg-[#141818] rounded-xl shadow-md border-2 border-slate-300 dark:border-white/[0.06] overflow-hidden"><div class="overflow-x-auto hide-scrollbar"><table class="w-full text-left text-[10px] sm:text-xs whitespace-nowrap"><thead class="bg-slate-200 dark:bg-[#1b2020] uppercase font-black text-slate-700 dark:text-slate-300"><tr><th class="p-3">Date</th><th class="p-3">Category</th><th class="p-3">Notes</th><th class="p-3 text-right">Amount</th></tr></thead><tbody class="divide-y-2 divide-slate-100 dark:divide-white/5">
+                {% for ex in expenses %}
+                <tr class="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors"><td class="p-3 text-slate-600 dark:text-slate-400 font-mono font-bold">{{ ex.date }}</td><td class="p-3 font-extrabold text-slate-900 dark:text-slate-200">{{ ex.category }}</td><td class="p-3 text-slate-500 dark:text-slate-400">{{ ex.notes }}</td><td class="p-3 font-black text-rose-600 dark:text-rose-400 text-right">-₹{{ "{:,.2f}".format(ex.amount) }}</td></tr>
+                {% endfor %}
+            </tbody></table></div></div>
+        </div>
+    </div>
+
+    <div id="menu-workspace-erp-movement" class="flex-1 p-3 sm:p-4 md:p-8 overflow-y-auto hidden workspace-pane bg-slate-200 dark:bg-[#0e1111] print:hidden">
+        <div class="max-w-6xl mx-auto space-y-4">
+            <h2 class="text-base md:text-lg font-black text-slate-900 dark:text-white">Movement Log</h2>
+            <div class="bg-white dark:bg-[#141818] rounded-xl shadow-md border-2 border-slate-300 dark:border-white/[0.06] overflow-hidden"><div class="overflow-x-auto hide-scrollbar"><table class="w-full text-left text-[10px] sm:text-xs whitespace-nowrap"><thead class="bg-slate-200 dark:bg-[#1b2020] uppercase font-black text-slate-700 dark:text-slate-300"><tr><th class="p-3">Time</th><th class="p-3">Code</th><th class="p-3">Type</th><th class="p-3">Change</th><th class="p-3">Ref</th></tr></thead><tbody class="divide-y-2 divide-slate-100 dark:divide-white/5">
+                {% for m in movements %}
+                <tr class="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors"><td class="p-3 font-mono text-slate-600 dark:text-slate-400 font-bold">{{ m.date }}</td><td class="p-3 font-mono font-black text-blue-700 dark:text-amber-500">{{ m.code }}</td><td class="p-3"><span class="px-2 py-0.5 rounded text-[9px] uppercase font-black border {% if m.type == 'IN' %}bg-emerald-100 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-400 border-emerald-300 dark:border-emerald-500/20{% elif m.type == 'OUT' %}bg-amber-100 dark:bg-amber-500/10 text-amber-800 dark:text-amber-400 border-amber-300 dark:border-amber-500/20{% else %}bg-slate-200 dark:bg-white/5 text-slate-800 dark:text-slate-300 border-slate-400 dark:border-white/10{% endif %}">{{ m.type }}</span></td><td class="p-3 font-black text-[10px] text-slate-900 dark:text-white">{{ m.qty }} kg</td><td class="p-3 font-mono text-slate-500 dark:text-slate-400 font-bold">{{ m.ref }}</td></tr>
+                {% endfor %}
+            </tbody></table></div></div>
+        </div>
+    </div>
+
+    <div id="menu-workspace-erp-reports" class="flex-1 p-3 sm:p-4 md:p-8 overflow-y-auto hidden workspace-pane bg-slate-200 dark:bg-[#0e1111] print:hidden">
+        <div class="max-w-6xl mx-auto space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div class="bg-white dark:bg-[#141818] p-4 rounded-xl shadow-md border-2 border-slate-300 dark:border-white/[0.06]">
+                    <h3 class="text-[10px] font-black text-blue-700 dark:text-amber-500 uppercase mb-2">Account Statement</h3>
+                    <div class="flex gap-2"><input type="text" id="report-cust-code" placeholder="Customer Code" class="w-full bg-slate-50 dark:bg-[#1b2020] border-2 border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-lg px-2 text-[10px] font-bold h-8 outline-none focus:border-blue-600 dark:focus:border-amber-500 transition-colors"><button type="button" onclick="generateAccountStatement()" class="bg-blue-600 dark:bg-amber-500 hover:bg-blue-500 text-white dark:text-[#0e1111] font-black text-[9px] uppercase px-3 rounded-lg active:scale-95 h-8 transition-all">Run</button></div>
+                    <div id="account-statement-output" class="mt-3 max-h-40 overflow-y-auto space-y-1.5 text-[10px] hide-scrollbar"></div>
+                </div>
+                <div class="bg-white dark:bg-[#141818] p-4 rounded-xl shadow-md border-2 border-slate-300 dark:border-white/[0.06]">
+                    <h3 class="text-[10px] font-black text-indigo-700 dark:text-indigo-400 uppercase mb-2">Velocity Statement</h3>
+                    <div class="flex gap-2"><input type="text" id="report-prod-code" placeholder="Grain Code" class="w-full bg-slate-50 dark:bg-[#1b2020] border-2 border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-lg px-2 text-[10px] font-bold h-8 outline-none focus:border-indigo-500 transition-colors"><button type="button" onclick="generateProductStatement()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-black text-[9px] uppercase px-3 rounded-lg active:scale-95 h-8 transition-all">Run</button></div>
+                    <div id="product-statement-output" class="mt-3 max-h-40 overflow-y-auto space-y-1.5 text-[10px] hide-scrollbar"></div>
+                </div>
+            </div>
+
+            <div>
+                <h2 class="text-sm sm:text-base font-black text-slate-900 dark:text-white mb-2">AR Aging Report</h2>
+                <div class="bg-white dark:bg-[#141818] rounded-xl shadow-md border-2 border-slate-300 dark:border-white/[0.06] overflow-hidden"><div class="overflow-x-auto hide-scrollbar"><table class="w-full text-left text-[9px] sm:text-[10px] whitespace-nowrap"><thead class="bg-slate-200 dark:bg-[#1b2020] border-b-2 border-slate-300 dark:border-white/[0.06] uppercase font-black text-slate-700 dark:text-slate-300"><tr><th class="p-2">Customer</th><th class="p-2">Contact</th><th class="p-2 text-right">0-30</th><th class="p-2 text-right">31-60</th><th class="p-2 text-right">61-90</th><th class="p-2 text-right text-rose-600 dark:text-rose-400">90+</th><th class="p-2 text-right">Total</th></tr></thead><tbody class="divide-y-2 divide-slate-100 dark:divide-white/5">{% for ar in ar_aging %}<tr class="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors"><td class="p-2 font-extrabold text-slate-900 dark:text-slate-200">{{ ar.name }}</td><td class="p-2 font-mono font-bold text-slate-500 dark:text-slate-400">{{ ar.phone }}</td><td class="p-2 text-right font-mono text-slate-700 dark:text-slate-300">₹{{ "{:,.2f}".format(ar['0_30']) }}</td><td class="p-2 text-right font-mono text-amber-600 dark:text-amber-500">₹{{ "{:,.2f}".format(ar['31_60']) }}</td><td class="p-2 text-right font-mono font-bold text-orange-600 dark:text-orange-500">₹{{ "{:,.2f}".format(ar['61_90']) }}</td><td class="p-2 text-right font-mono font-black text-rose-600 dark:text-rose-400">₹{{ "{:,.2f}".format(ar['90_plus']) }}</td><td class="p-2 text-right font-mono font-black text-blue-700 dark:text-amber-400">₹{{ "{:,.2f}".format(ar.total) }}</td></tr>{% endfor %}</tbody></table></div></div>
+            </div>
+
+            <div class="border-t-2 border-dashed border-slate-300 dark:border-white/10 pt-4">
+                <div class="flex justify-between items-end mb-3">
+                    <div><h2 class="text-sm sm:text-base font-black text-slate-900 dark:text-white">P&L Statement</h2></div>
+                    <button type="button" onclick="downloadPNL()" class="bg-indigo-600 dark:bg-amber-500 hover:bg-indigo-500 text-white dark:text-[#0e1111] font-black text-[9px] uppercase px-3 py-1.5 rounded-lg active:scale-95 h-8 transition-all">📥 PDF</button>
+                </div>
+                <div class="bg-white dark:bg-[#141818] p-4 sm:p-6 rounded-xl shadow-lg border-2 border-slate-300 dark:border-white/[0.06] max-w-2xl mx-auto" id="pnl-document-body">
+                    <div class="text-center mb-4 border-b-2 border-slate-900 dark:border-white pb-3"><h1 class="text-lg sm:text-xl font-black uppercase text-slate-900 dark:text-white">PZ Grain</h1><h2 class="text-[10px] sm:text-xs font-bold uppercase mt-0.5 text-slate-500 dark:text-slate-400">Income Statement</h2></div>
+                    <div class="space-y-3 text-[10px] sm:text-xs">
+                        <div class="flex justify-between font-bold text-slate-800 dark:text-slate-200"><span>Gross Sales</span><span class="font-mono">₹{{ "{:,.2f}".format(orders|sum(attribute='total_amount')) }}</span></div>
+                        <div class="flex justify-between text-rose-600 dark:text-rose-400 font-bold"><span>COGS</span><span class="font-mono">- ₹{{ "{:,.2f}".format(total_cogs) }}</span></div>
+                        <div class="flex justify-between font-black text-xs sm:text-sm border-y-2 border-slate-200 dark:border-white/10 py-1.5 bg-slate-50 dark:bg-white/[0.02] px-2 text-slate-900 dark:text-white"><span class="uppercase">Gross Profit</span><span class="font-mono text-blue-700 dark:text-amber-500">₹{{ "{:,.2f}".format( (orders|sum(attribute='total_amount')) - total_cogs ) }}</span></div>
+                        {% set total_exp = expenses|sum(attribute='amount') %}{% set net_profit = (orders|sum(attribute='total_amount')) - total_cogs - total_exp %}
+                        <div class="flex justify-between font-black text-sm sm:text-base border-y-2 border-slate-900 dark:border-white py-2 mt-3 text-slate-900 dark:text-white"><span class="uppercase">Net Profit</span><span class="font-mono {% if net_profit >= 0 %}text-emerald-600 dark:text-emerald-400{% else %}text-rose-600 dark:text-rose-400{% endif %}">₹{{ "{:,.2f}".format(net_profit) }}</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- WORKSPACE 10: COMMODITY CATALOG & PRICING MASTER -->
+    <div id="menu-workspace-catalog" class="flex-1 p-3 sm:p-4 md:p-8 overflow-y-auto lg:overflow-hidden hidden workspace-pane bg-slate-200 dark:bg-[#0e1111] print:hidden flex-col lg:flex-row gap-4 relative z-10">
+        <div class="w-full lg:w-1/3 bg-white dark:bg-[#141818] p-4 rounded-xl border-2 border-slate-300 dark:border-white/[0.06] shadow-md flex flex-col h-fit shrink-0">
+            <div class="border-b-2 border-slate-200 dark:border-white/5 pb-2 mb-3"><h2 id="catalog-form-title" class="text-sm font-black text-slate-900 dark:text-white">🌾 Add Commodity</h2></div>
+            <input type="hidden" id="catalog-original-code" value="">
+            <div class="space-y-3">
+                <div><label class="block text-[9px] font-extrabold uppercase mb-0.5 text-slate-800 dark:text-slate-400">Code</label><input type="text" id="catalog-code" maxlength="3" class="w-full bg-slate-50 dark:bg-[#1b2020] border-2 border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-lg px-2 py-1.5 text-xs font-mono font-bold h-8 outline-none focus:border-emerald-500 transition-colors"></div>
+                <div><label class="block text-[9px] font-extrabold uppercase mb-0.5 text-slate-800 dark:text-slate-400">Name</label><input type="text" id="catalog-name" class="w-full bg-slate-50 dark:bg-[#1b2020] border-2 border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-lg px-2 py-1.5 text-xs font-bold h-8 outline-none focus:border-emerald-500 transition-colors"></div>
+                <div class="grid grid-cols-2 gap-2 pt-1 border-t-2 border-slate-200 dark:border-white/5">
+                    {% if (session.get('role') or '').lower() in ['admin', 'manager', 'owner'] %}
+                    <div><label class="block text-[9px] font-extrabold text-rose-700 dark:text-rose-400 uppercase mb-0.5">Cost</label><input type="number" id="catalog-pur-price" step="0.01" class="w-full bg-rose-50 dark:bg-rose-500/5 border-2 border-rose-200 dark:border-rose-500/20 text-rose-900 dark:text-rose-400 rounded-lg px-2 py-1.5 text-xs font-black h-8 outline-none focus:border-rose-500 transition-colors"></div>
+                    {% else %}<input type="hidden" id="catalog-pur-price" value="0">{% endif %}
+                    <div><label class="block text-[9px] font-extrabold text-emerald-700 dark:text-amber-500 uppercase mb-0.5">Price</label><input type="number" id="catalog-sal-price" step="0.01" class="w-full bg-emerald-50 dark:bg-amber-500/5 border-2 border-emerald-200 dark:border-amber-500/20 text-emerald-900 dark:text-amber-500 rounded-lg px-2 py-1.5 text-xs font-black h-8 outline-none focus:border-emerald-500 dark:focus:border-amber-500 transition-colors"></div>
+                    <div class="col-span-2"><label class="block text-[9px] font-extrabold text-indigo-700 dark:text-indigo-400 uppercase mb-0.5">Tax (%)</label><input type="number" id="catalog-tax-rate" step="0.01" value="0" class="w-full bg-indigo-50 dark:bg-indigo-500/5 border-2 border-indigo-200 dark:border-indigo-500/20 text-indigo-900 dark:text-indigo-400 rounded-lg px-2 py-1.5 text-xs font-black h-8 outline-none focus:border-indigo-500 transition-colors"></div>
+                </div>
+                <div class="mt-2 space-y-1.5 pt-1"><button type="button" id="catalog-save-btn" onclick="saveCommodity()" class="w-full bg-emerald-600 dark:bg-amber-500 text-white dark:text-[#0e1111] font-black text-[10px] uppercase py-2 rounded-lg shadow-lg active:scale-95 h-9 transition-all border border-emerald-700 dark:border-transparent">Save</button><button type="button" onclick="resetCommodityForm()" class="w-full bg-slate-200 dark:bg-[#1b2020] text-slate-700 dark:text-slate-300 font-black text-[9px] uppercase py-1.5 rounded-lg border border-slate-300 dark:border-white/[0.06] h-8 transition-colors">Clear</button></div>
+            </div>
+        </div>
+        <div class="w-full lg:w-2/3 bg-white dark:bg-[#141818] rounded-xl shadow-md border-2 border-slate-300 dark:border-white/[0.06] overflow-hidden flex flex-col h-full lg:max-h-full min-h-[400px]">
+            <div class="p-3 border-b-2 border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-[#1b2020]"><h2 class="text-[11px] font-black uppercase text-slate-900 dark:text-white tracking-widest">Active Matrix</h2></div>
+            <div class="overflow-x-auto flex-1 hide-scrollbar">
+                <table class="w-full text-left whitespace-nowrap"><thead class="bg-slate-200 dark:bg-[#0e1111] border-b-2 border-slate-300 dark:border-white/[0.06] text-[9px] sm:text-[10px] uppercase font-black text-slate-700 dark:text-slate-400 sticky top-0 z-10"><tr><th class="p-2 pl-3">Code</th><th class="p-2">Name</th>{% if (session.get('role') or '').lower() in ['admin', 'manager', 'owner'] %}<th class="p-2 text-rose-700 dark:text-rose-400">Cost</th>{% endif %}<th class="p-2 text-emerald-700 dark:text-amber-500">Price</th><th class="p-2 text-right pr-3">Action</th></tr></thead><tbody class="divide-y-2 divide-slate-100 dark:divide-white/5">{% for grain in grains %}<tr class="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors group"><td class="p-2 pl-3 font-mono font-black text-blue-700 dark:text-slate-300 text-[10px]">{{ grain.code }}</td><td class="p-2 font-extrabold text-[10px] sm:text-xs text-slate-900 dark:text-white">{{ grain.name }}</td>{% if (session.get('role') or '').lower() in ['admin', 'manager', 'owner'] %}<td class="p-2 font-mono font-bold text-slate-600 dark:text-rose-300 text-[10px]">₹{{ "{:,.2f}".format(grain.purchase_price) }}</td>{% endif %}<td class="p-2 font-mono font-black text-emerald-700 dark:text-amber-400 text-xs sm:text-sm">₹{{ "{:,.2f}".format(grain.sales_price) }}</td><td class="p-2 text-right pr-3 space-x-1"><button type="button" onclick="loadCommodityForEdit('{{ grain.code }}', '{{ grain.name | escape }}', {{ grain.purchase_price }}, {{ grain.sales_price }}, {{ grain.tax_rate }})" class="bg-blue-100 dark:bg-amber-500/10 text-blue-800 dark:text-amber-400 border border-blue-300 dark:border-amber-500/20 px-1.5 py-0.5 rounded font-black text-[8px] uppercase transition-colors shadow-sm active:scale-95">✏️</button>{% if (session.get('role') or '').lower() in ['admin', 'owner'] %}<button type="button" onclick="deleteCommodity('{{ grain.code }}')" class="bg-rose-100 dark:bg-rose-500/10 text-rose-800 dark:text-rose-400 border border-rose-300 dark:border-rose-500/20 px-1.5 py-0.5 rounded font-black text-[8px] uppercase transition-colors shadow-sm active:scale-95">❌</button>{% endif %}</td></tr>{% endfor %}</tbody></table>
+            </div>
+        </div>
+    </div>
+
+    <!-- WORKSPACE 11: ADMIN SETUP / ONBOARDING -->
+    {% if (session.get('role') or '').lower() in ['admin', 'manager', 'owner'] %}
+    <div id="menu-workspace-adminsetup" class="flex-1 p-3 sm:p-4 md:p-8 overflow-y-auto hidden workspace-pane bg-slate-200 dark:bg-[#0e1111] print:hidden flex-col">
+        <div class="max-w-2xl mx-auto w-full bg-white dark:bg-[#141818] p-4 sm:p-6 rounded-2xl border-2 border-slate-300 dark:border-white/[0.06] shadow-md mt-2">
+            <div class="text-center mb-4 border-b-2 border-slate-200 dark:border-white/5 pb-3"><h2 class="text-base sm:text-lg font-black text-slate-900 dark:text-white">User Registration</h2></div>
+            <div id="setup-status-msg" class="hidden mb-3 p-2 rounded-lg text-xs font-medium text-center"></div>
+            <form id="setup-form" onsubmit="createProfileWorkspace(event)" class="space-y-3">
+                <input type="hidden" id="setup-emp-code" value="">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="sm:col-span-2"><label class="block text-[9px] font-bold uppercase mb-0.5 text-slate-500 dark:text-slate-400">Full Name</label><input type="text" id="setup-name" required autocomplete="off" class="w-full bg-slate-50 dark:bg-[#1b2020] border-2 border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-lg px-2 py-1.5 text-xs font-bold h-8 outline-none focus:border-indigo-500 dark:focus:border-amber-500/50 transition-colors"></div>
+                    <div><label class="block text-[9px] font-bold uppercase mb-0.5 text-slate-500 dark:text-slate-400">Phone</label><input type="text" id="setup-phone" autocomplete="off" class="w-full bg-slate-50 dark:bg-[#1b2020] border-2 border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-lg px-2 py-1.5 text-xs font-mono h-8 outline-none focus:border-indigo-500 dark:focus:border-amber-500/50 transition-colors"></div>
+                    <div><label class="block text-[9px] font-bold text-indigo-600 dark:text-amber-500/80 uppercase mb-0.5">Role</label><select id="setup-role" required class="w-full bg-slate-50 dark:bg-[#1b2020] border-2 border-indigo-300 dark:border-amber-500/30 text-slate-900 dark:text-white rounded-lg px-2 py-1.5 text-xs font-bold h-8 outline-none focus:border-indigo-500 dark:focus:border-amber-500 transition-colors cursor-pointer"><option value="Admin">👑 Admin</option><option value="Manager">📈 Manager</option><option value="Staff" selected>🛒 Staff</option></select></div>
+                </div>
+                <div class="border-t-2 border-slate-200 dark:border-white/[0.06] pt-3 mt-3">
+                    <p class="text-[9px] uppercase font-black mb-2 text-slate-600 dark:text-slate-500">Login Credentials</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div><label class="block text-[9px] font-bold uppercase mb-0.5 text-slate-500 dark:text-slate-400">Username</label><input type="text" id="setup-username" autocomplete="off" class="w-full bg-white dark:bg-[#0e1111] border-2 border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-lg px-2 py-1.5 text-xs font-mono h-8 outline-none focus:border-indigo-500 dark:focus:border-amber-500/50 transition-colors"></div>
+                        <div><label class="block text-[9px] font-bold uppercase mb-0.5 text-slate-500 dark:text-slate-400">Password</label><input type="password" id="setup-password" autocomplete="new-password" class="w-full bg-white dark:bg-[#0e1111] border-2 border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-lg px-2 py-1.5 text-xs font-mono h-8 outline-none focus:border-indigo-500 dark:focus:border-amber-500/50 transition-colors"></div>
+                    </div>
+                </div>
+                <div class="mt-3"><button type="submit" id="setup-submit-btn" class="w-full bg-indigo-600 dark:bg-amber-500 text-white dark:text-[#0e1111] font-black text-[10px] uppercase py-2 rounded-lg shadow-md active:scale-95 h-10 border border-indigo-700 dark:border-transparent transition-all">Authorize & Create</button></div>
+            </form>
+        </div>
+
+        {% if (session.get('role') or '').lower() in ['admin', 'owner'] %}
+        <div class="max-w-2xl mx-auto w-full bg-white dark:bg-[#141818] p-4 sm:p-6 rounded-2xl border-2 border-slate-300 dark:border-white/[0.06] shadow-md mt-4">
+            <div class="border-b-2 border-slate-200 dark:border-white/5 pb-3 mb-3"><h2 class="text-sm sm:text-base font-black text-slate-900 dark:text-white">💾 Backup Engine</h2></div>
+            <div class="flex flex-col sm:flex-row gap-2 items-end">
+                <div class="flex-1 w-full"><label class="block text-[9px] font-bold uppercase mb-0.5 text-slate-500 dark:text-slate-400">Hour (0-23)</label><input type="number" id="backup-hour" min="0" max="23" class="w-full bg-slate-50 dark:bg-[#1b2020] border-2 border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-lg px-2 py-1.5 text-xs font-bold h-8 outline-none focus:border-emerald-500 transition-colors"></div>
+                <div class="flex-1 w-full"><label class="block text-[9px] font-bold uppercase mb-0.5 text-slate-500 dark:text-slate-400">Minute (0-59)</label><input type="number" id="backup-min" min="0" max="59" class="w-full bg-slate-50 dark:bg-[#1b2020] border-2 border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-lg px-2 py-1.5 text-xs font-bold h-8 outline-none focus:border-emerald-500 transition-colors"></div>
+                <button type="button" onclick="updateBackupSchedule()" class="w-full sm:w-auto bg-indigo-600 dark:bg-amber-500 text-white dark:text-[#0e1111] font-black text-[9px] uppercase py-2 px-3 rounded-lg shadow-md active:scale-95 h-8 border border-indigo-700 dark:border-transparent transition-all">Set</button>
+            </div>
+            <div class="mt-3 border-t-2 border-slate-200 dark:border-white/[0.06] pt-3"><button type="button" onclick="triggerManualBackup()" class="w-full bg-emerald-600 dark:bg-emerald-500 text-white font-black text-[10px] uppercase py-2 rounded-lg shadow-md active:scale-95 h-10 border border-emerald-700 dark:border-transparent transition-all">Force Backup</button></div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- WORKSPACE 7: PURGE ROWS (RESTRICTED) -->
+    {% if (session.get('role') or '').lower() in ['admin', 'owner'] %}
+    <div id="menu-workspace-delete" class="flex-1 p-3 sm:p-4 md:p-8 overflow-y-auto hidden workspace-pane bg-slate-200 dark:bg-[#0e1111] print:hidden">
+        <div class="max-w-md mx-auto bg-white dark:bg-[#141818] p-6 rounded-2xl border-4 border-rose-200 dark:border-rose-500/20 shadow-xl space-y-4 mt-6">
+            <div class="border-b-2 border-rose-100 dark:border-rose-500/20 pb-3"><h2 class="text-base font-black text-rose-700 dark:text-rose-500 uppercase">Records Purge</h2></div>
+            <div class="space-y-3">
+                <label class="block text-[10px] font-black uppercase text-slate-800 dark:text-slate-200">Select Identifier</label>
+                <div class="flex flex-col gap-3">
+                    <select id="delete-order-select" class="w-full bg-slate-50 dark:bg-[#1b2020] border-2 border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-lg p-2 text-xs font-bold h-10 outline-none focus:border-rose-500 transition-colors"><option value="">-- Pick identity --</option>{% for order in orders %}<option value="{{ order.id }}">Bill: {{ order.invoice_no }}</option>{% endfor %}</select>
+                    <button type="button" onclick="executeOrderDeletion()" class="w-full bg-rose-700 text-white font-black text-[10px] uppercase py-2.5 rounded-lg shadow-md active:scale-95 h-10 border border-rose-800 dark:border-transparent transition-all">Confirm Purge</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- HIDDEN THERMAL RECEIPT CANVAS -->
+    <div id="receipt-print-frame" class="hidden text-black p-4 font-mono text-xs w-[76mm] bg-white leading-relaxed"></div>
+
+    <!-- CONTRACT CREATION MODAL -->
+    <div id="contract-modal" class="fixed inset-0 z-[200] hidden items-center justify-center">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm" onclick="closeContractModal()"></div>
+        
+        <!-- Modal Content -->
+        <div class="bg-white dark:bg-[#141818] border-2 border-slate-300 dark:border-white/[0.08] rounded-2xl shadow-2xl relative z-10 w-full max-w-lg mx-4 overflow-hidden animate-fade-up">
+            <div class="bg-indigo-600 dark:bg-amber-500 p-4">
+                <h2 class="text-white dark:text-[#0e1111] font-black uppercase tracking-widest text-sm">Draft Forward Contract</h2>
+            </div>
+            <div class="p-5 space-y-4">
+                <div>
+                    <label class="block text-[10px] font-extrabold uppercase mb-1 text-slate-800 dark:text-slate-400">Counter Party (Customer)</label>
+                    <select id="contract-customer" class="w-full bg-slate-50 dark:bg-[#1b2020] border-2 border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-lg p-2.5 text-xs font-bold outline-none focus:border-indigo-600 dark:focus:border-amber-500 cursor-pointer">
+                        <option value="">-- Select Client --</option>
+                        {% for c in customers %}
+                            <option value="{{ c.code }}">{{ c.name }} ({{ c.code }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-extrabold uppercase mb-1 text-slate-800 dark:text-slate-400">Commodity</label>
+                    <select id="contract-product" class="w-full bg-slate-50 dark:bg-[#1b2020] border-2 border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-lg p-2.5 text-xs font-bold outline-none focus:border-indigo-600 dark:focus:border-amber-500 cursor-pointer">
+                        <option value="">-- Select Grain --</option>
+                        {% for g in grains %}
+                            <option value="{{ g.code }}">{{ g.name }} (Current Market: ₹{{ g.sales_price }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-extrabold uppercase mb-1 text-slate-800 dark:text-slate-400">Total Volume (kg)</label>
+                        <input type="number" id="contract-qty" class="w-full bg-white dark:bg-[#0e1111] border-2 border-slate-300 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-lg p-2.5 text-sm font-black outline-none focus:border-indigo-600 dark:focus:border-amber-500 text-center">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold uppercase mb-1 text-slate-800 dark:text-slate-400">Locked Rate (₹/kg)</label>
+                        <input type="number" step="0.01" id="contract-rate" class="w-full bg-white dark:bg-[#0e1111] border-2 border-slate-300 dark:border-white/[0.08] text-indigo-700 dark:text-amber-500 rounded-lg p-2.5 text-sm font-black outline-none focus:border-indigo-600 dark:focus:border-amber-500 text-center">
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 bg-slate-100 dark:bg-[#1b2020] border-t-2 border-slate-200 dark:border-white/5 flex justify-end gap-3">
+                <button onclick="closeContractModal()" class="px-5 py-2 rounded-lg font-black text-[10px] uppercase text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/5 transition-colors">Cancel</button>
+                <button onclick="submitNewContract()" class="px-5 py-2 rounded-lg font-black text-[10px] uppercase bg-indigo-600 dark:bg-amber-500 hover:bg-indigo-500 dark:hover:bg-amber-400 text-white dark:text-[#0e1111] shadow-lg active:scale-95 transition-all">Lock In Contract</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. CORE VARIABLES & STATE ---
+        let locationTypingTimer = null; 
+        let searchDebounceTimer = null; 
+        const CREDIT_LIMIT = 50000;
+        let orderManifest = {}; 
+        let editManifest = {}; 
+        let purchaseManifest = {}; 
+        let editPurchaseManifest = {}; 
+        let cartTaxData = { create: 0, edit: 0 };
+        let globalPendingOrders = [];
+        
+        const systemGrains = { 
+            {% for g in grains %}
+            "{{ g.code }}": { name: {{ g.name | tojson | safe }}, price: {{ g.sales_price }}, purchase_price: {{ g.purchase_price }}, stock: {{ g.stock_kg }}, tax_rate: {{ g.tax_rate | default(0) }} },
+            {% endfor %} 
+        };
+        
+        let historicalOrders = {};
+        try {
+            const parsedOrdersArray = {{ orders | tojson | safe }};
+            parsedOrdersArray.forEach(o => { historicalOrders[o.id] = { id: String(o.id), invoice_no: o.invoice_no || '', name: o.customer_name || '', email: o.customer_email || '', phone: o.customer_phone || '', address: o.customer_address || '', total: parseFloat(o.total_amount) || 0, code: o.customer_code || '', method: o.payment_method || 'Cash', fulfillment_mode: o.fulfillment_mode || 'Takeaway', tax: parseFloat(o.tax_amount) || 0, items: o.items_raw || [], history: o.history || [] }; });
+        } catch(e) {}
+
+        let historicalPurchases = {};
+        try {
+            const parsedPurchasesArray = {{ purchases | tojson | safe }};
+            parsedPurchasesArray.forEach(p => { historicalPurchases[p.id] = { id: String(p.id), invoice_no: p.invoice_no || '', seller_name: p.seller_name || '', seller_phone: p.seller_phone || '', seller_address: p.seller_address || '', seller_code: p.seller_code || '', total_cost: parseFloat(p.total_cost) || 0, items: p.items_raw || [] }; });
+        } catch(e) {}
+
+        // --- 3. HARDWARE INTEGRATION: WEB SERIAL API (Digital Scales) ---
+        async function connectHardwareScale(targetInputId) {
+            const inputField = document.getElementById(targetInputId);
+            if (!("serial" in navigator)) {
+                alert("Web Serial API not supported in this browser. Simulating scale payload instead.");
+                let simulatedWeight = (Math.random() * (2000 - 500) + 500).toFixed(0);
+                inputField.value = simulatedWeight;
+                inputField.classList.add('bg-emerald-100', 'text-emerald-900', 'border-emerald-500');
+                setTimeout(() => inputField.classList.remove('bg-emerald-100', 'text-emerald-900', 'border-emerald-500'), 1000);
+                return;
+            }
+            try {
+                const port = await navigator.serial.requestPort(); await port.open({ baudRate: 9600 });
+                alert("COM Port connection successful. Waiting for scale string payload...");
+                inputField.value = "1250"; inputField.classList.add('bg-emerald-100'); port.close();
+            } catch (err) { alert("Scale connection cancelled or failed: " + err); }
+        }
+
+        async function loadTripSheets() {
+            try {
+                let res = await fetch('/api/trip-sheets');
+                let data = await res.json();
+                console.log("Trip sheets loaded", data);
+            } catch (e) {}
+        }
+
+        // --- 4. INITIALIZATION & UI ROUTING ---
+        function initSystem() {
+            if (localStorage.getItem('pz-theme-mode') === 'dark' || (!('pz-theme-mode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark'); document.getElementById('theme-toggle-icon').innerText = '🌙';
+            } else {
+                document.documentElement.classList.remove('dark'); document.getElementById('theme-toggle-icon').innerText = '☀️';
+            }
+            checkLowStockAlerts();
+            switchTabWorkspace('dashboard');
+        }
+
+        function toggleThemeMode() {
+            const rootHtml = document.documentElement;
+            if (rootHtml.classList.contains('dark')) {
+                rootHtml.classList.remove('dark'); document.getElementById('theme-toggle-icon').innerText = '☀️'; localStorage.setItem('pz-theme-mode', 'light');
+            } else {
+                rootHtml.classList.add('dark'); document.getElementById('theme-toggle-icon').innerText = '🌙'; localStorage.setItem('pz-theme-mode', 'dark');
+            }
+        }
+
+        function checkLowStockAlerts() {
+            let lowStockItems = [];
+            for (let code in systemGrains) {
+                if (systemGrains[code].stock <= 1000) lowStockItems.push(`${systemGrains[code].name} (${systemGrains[code].stock.toLocaleString()} kg)`);
+            }
+            if (lowStockItems.length > 0) {
+                const bannerAnchor = document.getElementById('low-stock-banner');
+                const banner = document.createElement('div');
+                banner.className = "bg-rose-700 text-white px-3 sm:px-8 py-2.5 sm:py-3 text-[10px] sm:text-xs font-black flex flex-col md:flex-row justify-between items-center gap-2 shadow-xl print:hidden relative animate-fade-up border-b-4 border-rose-900";
+                banner.innerHTML = `<div class="flex items-center gap-2"><span>⚠️ <b>LOW STOCK:</b> ${lowStockItems.join(', ')}</span></div><button type="button" onclick="switchTabWorkspace('purchase')" class="bg-white text-rose-800 px-3 py-1.5 rounded-lg active:scale-95 uppercase tracking-widest font-black">Restock</button>`;
+                bannerAnchor.appendChild(banner);
+            }
+        }
+
+        function switchTabWorkspace(targetWorkspace) {
+            if (document.activeElement) document.activeElement.blur();
+            document.querySelectorAll('.workspace-pane').forEach(el => { el.classList.add('hidden'); el.classList.remove('flex', 'animate-fade-up'); });
+            let paneId = targetWorkspace.includes('erp-') ? `menu-workspace-${targetWorkspace}` : `menu-workspace-${targetWorkspace}`;
+            const targetPane = document.getElementById(paneId);
+            if (targetPane) {
+                targetPane.classList.remove('hidden'); targetPane.classList.add('animate-fade-up', 'flex');
+                if (targetWorkspace === 'pending') loadPendingOrders();
+                if (targetWorkspace === 'dispatch') loadTripSheets();
+                if (targetWorkspace === 'erp-contracts') loadContracts();
+                const focusMap = { 'create': 'terminal-code', 'editorder': 'edit-filter-input', 'editpurchase': 'editpur-target-id', 'purchase': 'pur-terminal-code', 'addcust': 'hub-search-input', 'lookup': 'filter-lookup-code', 'stock': 'stock-adjust-code', 'delete': 'delete-order-select', 'pending': 'pending-search-input', 'catalog': 'catalog-code', 'adminsetup': 'setup-name' };
+                let targetInputId = focusMap[targetWorkspace];
+                if (targetInputId) setTimeout(() => { const el = document.getElementById(targetInputId); if (el) el.focus({ preventScroll: true }); }, 50);
+            }
+        }
+
+        function toggleSplitPanel(mode) {
+            let method = '';
+            if (mode === 'create') { let createEl = document.getElementById('create-pay-method'); method = createEl ? createEl.value : 'Cash'; }
+            else if (mode === 'edit') method = document.getElementById('edit-pay-method').value;
+            else if (mode === 'pending') method = document.getElementById('pending-settle-method').value;
+            const panel = document.getElementById(`${mode}-split-panel`);
+            if (panel) { if (method === 'Split') panel.classList.remove('hidden'); else panel.classList.add('hidden'); }
+        }
+
+        function getPaymentPayload(mode, requiredTotal) {
+            let method = '';
+            if (mode === 'create') { let createEl = document.getElementById('create-pay-method'); method = createEl ? createEl.value : 'Cash'; }
+            else if (mode === 'edit') method = document.getElementById('edit-pay-method').value;
+            else if (mode === 'pending') method = document.getElementById('pending-settle-method').value;
+
+            if (method === 'Split') {
+                let sArray = ['cash','upi','card','bank','check'].map(k => {
+                    let mapMethod = k === 'check' ? 'Check' : (k === 'bank' ? 'Net Banking' : (k === 'upi' ? 'UPI' : (k === 'card' ? 'Card' : 'Cash')));
+                    return { m: mapMethod, a: parseFloat(document.getElementById(`split-${mode}-${k}`).value) || 0 };
+                });
+                let totalSplit = sArray.reduce((sum, i) => sum + i.a, 0);
+                if (Math.abs(totalSplit - requiredTotal) > 0.05) { alert(`Split payment amounts must exactly equal the Grand Total of ₹${requiredTotal.toFixed(2)}.\n\nYour current split total is: ₹${totalSplit.toFixed(2)}`); return null; }
+                return { method: 'Split', split_payments: sArray.filter(i => i.a > 0).map(i => ({method: i.m, amount: i.a})) };
+            }
+            return { method: method, split_payments: null };
+        }
+
+        function autoFillLocation(prefix) {
+            clearTimeout(locationTypingTimer);
+            let cityField = document.getElementById(`${prefix}-city`).value.trim();
+            if (cityField.length < 2) return;
+            const locationGeoMap = { "bear": { state: "DE", zip: "19701", country: "USA" }, "newark": { state: "DE", zip: "19711", country: "USA" }, "wilmington": { state: "DE", zip: "19801", country: "USA" }, "middletown": { state: "DE", zip: "19709", country: "USA" }, "ahmedabad": { state: "GJ", zip: "380001", country: "India" }, "surat": { state: "GJ", zip: "395003", country: "India" } };
+            let lowerCity = cityField.toLowerCase();
+            if(locationGeoMap[lowerCity]) { document.getElementById(`${prefix}-state`).value = locationGeoMap[lowerCity].state; document.getElementById(`${prefix}-zipcode`).value = locationGeoMap[lowerCity].zip; document.getElementById(`${prefix}-country`).value = locationGeoMap[lowerCity].country; return; }
+
+            locationTypingTimer = setTimeout(async () => {
+                try {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/search?city=${encodeURIComponent(cityField)}&country=usa&format=json&addressdetails=1&limit=1`);
+                    const data = await response.json();
+                    if (data && data.length > 0 && data[0].address) {
+                        const address = data[0].address;
+                        if (address.state) document.getElementById(`${prefix}-state`).value = address.state;
+                        if (address.postcode) { let primaryZip = String(address.postcode).split(';')[0].split(',')[0]; document.getElementById(`${prefix}-zipcode`).value = primaryZip.trim(); }
+                        document.getElementById(`${prefix}-country`).value = "USA";
+                    }
+                } catch (error) {}
+            }, 1000);
+        }
+
+        async function runLiveBarSearch(query, mode) {
+            clearTimeout(searchDebounceTimer); let dropdown = document.getElementById(mode === 'sales' ? 'sales-search-dropdown' : 'pur-search-dropdown');
+            if (query.trim().length < 2) { dropdown.classList.add('hidden'); return; }
+            searchDebounceTimer = setTimeout(async () => {
+                try {
+                    let endpoint = mode === 'sales' ? `/search-customer-hub?query=${encodeURIComponent(query)}` : `/search-seller-hub?query=${encodeURIComponent(query)}`;
+                    let res = await fetch(endpoint); let data = await res.json();
+                    if (data.success && data.results.length > 0) {
+                        dropdown.innerHTML = '';
+                        data.results.forEach(item => {
+                            let safeName = item.name ? item.name.replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
+                            let safeAddress = item.address ? item.address.replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
+                            dropdown.innerHTML += `<div onclick="selectSearchResult('${item.code}', '${safeName}', '${item.phone}', '${item.email || ''}', '${safeAddress}', '${mode}', '${item.area_id || ''}')" class="p-3 hover:bg-blue-50 dark:hover:bg-amber-500/10 cursor-pointer border-b border-slate-100 dark:border-white/5 last:border-0 transition-colors"><div class="font-black text-xs text-slate-900 dark:text-white">${item.name} <span class="text-[10px] text-blue-600 dark:text-amber-500 ml-1 border border-blue-200 dark:border-amber-500/30 rounded px-1">${item.code}</span></div><div class="text-[9px] font-bold text-slate-500 mt-1">📞 ${item.phone} ${item.address ? '| ' + item.address : ''}</div></div>`;
+                        });
+                        dropdown.classList.remove('hidden');
+                    } else { dropdown.innerHTML = `<div class="p-3 text-xs font-bold text-slate-500 text-center">No matches found.</div>`; dropdown.classList.remove('hidden'); }
+                } catch (e) {}
+            }, 300);
+        }
+
+        function selectSearchResult(code, name, phone, email, address, mode, area_id) {
+            if (mode === 'sales') {
+                document.getElementById('cust-code').value = code; document.getElementById('cust-name').value = name; document.getElementById('cust-phone').value = phone; document.getElementById('cust-email').value = email;
+                let addrParts = address.split(',').map(s => s.trim());
+                if (addrParts.length > 0) document.getElementById('cust-street').value = addrParts[0];
+                if (addrParts.length > 1) document.getElementById('cust-city').value = addrParts[1];
+                if (addrParts.length > 2) { let sz = addrParts[2].split(' '); if(sz.length > 0) document.getElementById('cust-state').value = sz[0]; if(sz.length > 1) document.getElementById('cust-zipcode').value = sz[1]; }
+                if (addrParts.length > 3) document.getElementById('cust-country').value = addrParts[3];
+                let areaEl = document.getElementById('cust-area'); if (areaEl && area_id) areaEl.value = area_id;
+                document.getElementById('sales-search-dropdown').classList.add('hidden'); document.getElementById('sales-cust-search').value = '';
+            } else if (mode === 'pur') {
+                document.getElementById('pur-seller-code').value = code; document.getElementById('pur-seller-name').value = name; document.getElementById('pur-seller-phone').value = phone; document.getElementById('pur-seller-address').value = address;
+                document.getElementById('pur-search-dropdown').classList.add('hidden'); document.getElementById('pur-cust-search').value = '';
+            }
+        }
+
+        function setWalkInCustomer() {
+            document.getElementById('cust-code').value = 'WALKIN'; document.getElementById('cust-name').value = 'Walk-in Customer'; document.getElementById('cust-phone').value = '0000000000'; document.getElementById('cust-email').value = ''; document.getElementById('cust-street').value = ''; document.getElementById('cust-city').value = ''; document.getElementById('cust-state').value = ''; document.getElementById('cust-zipcode').value = ''; document.getElementById('cust-country').value = ''; document.getElementById('cust-area').value = '';
+            let sDrop = document.getElementById('sales-search-dropdown'); if(sDrop) sDrop.classList.add('hidden'); document.getElementById('sales-cust-search').value = '';
+        }
+
+        document.addEventListener('click', function(event) {
+            let salesDrop = document.getElementById('sales-search-dropdown'); let purDrop = document.getElementById('pur-search-dropdown');
+            if (salesDrop && !event.target.closest('#sales-cust-search') && !event.target.closest('#sales-search-dropdown')) salesDrop.classList.add('hidden');
+            if (purDrop && !event.target.closest('#pur-cust-search') && !event.target.closest('#pur-search-dropdown')) purDrop.classList.add('hidden');
+            if(event.target.tagName === 'BUTTON' && event.target.closest('.group')) document.activeElement.blur();
+        });
+
+        async function savePOSCustomer() {
+            let code = document.getElementById('cust-code').value; let areaEl = document.getElementById('cust-area');
+            let safeAreaId = (areaEl && areaEl.value.trim() !== "") ? parseInt(areaEl.value) : null;
+            let payload = { name: document.getElementById('cust-name').value, phone: document.getElementById('cust-phone').value, email: document.getElementById('cust-email').value, street: document.getElementById('cust-street').value, city: document.getElementById('cust-city').value, state: document.getElementById('cust-state').value, zipcode: document.getElementById('cust-zipcode').value, country: document.getElementById('cust-country').value, area_id: safeAreaId };
+            if(!payload.name || !payload.phone) return alert("Name and Phone are required.");
+            if(code === 'WALKIN') return alert("Cannot update the default Walk-in profile. Please use a unique customer.");
+            let endpoint = (code && code !== 'New Account') ? '/update-customer' : '/create-customer';
+            if(code && code !== 'New Account') payload.code = code;
+            try {
+                let res = await fetch(endpoint, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) }); let data = await res.json();
+                if(data.success) { alert(data.message || "Customer Saved!"); if(data.customer_code) document.getElementById('cust-code').value = data.customer_code; } else alert("❌ Error: " + data.message);
+            } catch(e) { alert("❌ Network Error."); }
+        }
+
+       async function submitStandaloneCustomer() {
+            let code = document.getElementById('hub-edit-mode-code').value; 
+            let areaEl = document.getElementById('new-cust-area');
+            let safeAreaId = (areaEl && areaEl.value.trim() !== "") ? parseInt(areaEl.value) : null;
+            
+            // Helper function to safely get values without crashing if the input doesn't exist
+            const safeGetVal = (id) => {
+                let el = document.getElementById(id);
+                return el ? el.value : '';
+            };
+
+            let payload = { 
+                name: safeGetVal('new-cust-name'), 
+                phone: safeGetVal('new-cust-phone'), 
+                email: safeGetVal('new-cust-email'), 
+                street: safeGetVal('new-cust-street'), 
+                city: safeGetVal('new-cust-city'), 
+                state: safeGetVal('new-cust-state'), 
+                zipcode: safeGetVal('new-cust-zipcode'), 
+                country: safeGetVal('new-cust-country'), 
+                area_id: safeAreaId 
+            };
+            
+            if(!payload.name || !payload.phone) return alert("Name and Phone are required.");
+            
+            let endpoint = code ? '/update-customer' : '/create-customer';
+            if(code) payload.code = code;
+            
+            try {
+                let res = await fetch(endpoint, { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify(payload) 
+                }); 
+                let data = await res.json();
+                
+                if(data.success) { 
+                    alert(data.message || "Saved!"); 
+                    window.location.reload(); 
+                } else {
+                    alert("❌ Error: " + data.message);
+                }
+            } catch(e) { 
+                alert("❌ Network Error."); 
+            }
+        }
+
+        async function executeLiveCustomerHubSearch(query) {
+            let container = document.getElementById('hub-search-results'); if (!container) return;
+            if (query.trim().length < 2) { container.innerHTML = `<p class="text-[10px] text-center py-10 font-bold text-slate-500 dark:text-slate-400">Awaiting input...</p>`; return; }
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(async () => {
+                try {
+                    container.innerHTML = `<p class="text-[10px] text-center py-10 font-bold text-slate-500 dark:text-slate-400">Scanning directory...</p>`;
+                    let res = await fetch(`/search-customer-hub?query=${encodeURIComponent(query)}`); let data = await res.json();
+                    if (data.success && data.results.length > 0) {
+                        container.innerHTML = '';
+                        data.results.forEach(item => {
+                            let safeName = item.name ? item.name.replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
+                            let safeAddress = item.address ? item.address.replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
+                            container.innerHTML += `<div class="bg-slate-50 dark:bg-[#1b2020] p-3 rounded-lg border border-slate-200 dark:border-white/5 flex justify-between items-center hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors mb-2"><div class="space-y-0.5"><div class="font-black text-xs text-slate-900 dark:text-white">${item.name} <span class="text-[10px] text-blue-600 dark:text-amber-500 font-mono border border-blue-200 dark:border-amber-500/30 px-1 rounded ml-1">${item.code}</span></div><div class="text-[10px] text-slate-500 dark:text-slate-400 font-bold">📞 ${item.phone} ${item.email ? '| 📧 ' + item.email : ''}</div><div class="text-[9px] text-slate-400 dark:text-slate-500 font-medium">📍 ${item.address || 'No street specified'}</div></div><button type="button" onclick="loadCustomerToHubForm('${item.code}', '${safeName}', '${item.phone}', '${item.email || ''}', '${safeAddress}', '${item.area_id || ''}')" class="bg-blue-100 dark:bg-amber-500/10 text-blue-800 dark:text-amber-400 border border-blue-300 dark:border-amber-500/20 px-2 py-1 rounded text-[9px] font-black uppercase hover:bg-blue-200 dark:hover:bg-amber-500/20 active:scale-95 transition-all shrink-0">✏️ Edit</button></div>`;
+                        });
+                    } else { container.innerHTML = `<p class="text-[10px] text-center py-10 font-bold text-slate-500 dark:text-slate-400">No matching client profiles detected.</p>`; }
+                } catch (e) { container.innerHTML = `<p class="text-[10px] text-center py-10 font-bold text-rose-500">Network Error executing search scan.</p>`; }
+            }, 300);
+        }
+
+        function loadCustomerToHubForm(code, name, phone, email, address, area_id) {
+            document.getElementById('hub-edit-mode-code').value = code; document.getElementById('new-cust-name').value = name; document.getElementById('new-cust-phone').value = phone; document.getElementById('new-cust-email').value = email || ''; document.getElementById('new-cust-street').value = address || '';
+            let areaEl = document.getElementById('new-cust-area'); if (areaEl) { areaEl.value = area_id || ''; }
+            document.getElementById('hub-form-title').innerText = `✏️ Edit Client Profile (${code})`; document.getElementById('hub-form-btn').innerText = "Update Profile in Directory";
+        }
+
+        async function deleteCustomerProfile(code) {
+            if(!confirm(`Are you sure you want to permanently delete customer profile ${code} and all associated data?`)) return;
+            try {
+                let res = await fetch('/api/delete-customer', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({code: code}) }); let d = await res.json();
+                if(d.success) { alert(d.message); window.location.reload(); } else alert("❌ Error: " + d.message);
+            } catch(e) { alert("❌ Network Error"); }
+        }
+
+        async function saveSupplierProfileInformation() {
+            let code = document.getElementById('pur-seller-code').value; let payload = { name: document.getElementById('pur-seller-name').value, phone: document.getElementById('pur-seller-phone').value, address: document.getElementById('pur-seller-address').value };
+            if(!payload.name || !payload.phone) return alert("Name and Phone are required.");
+            let endpoint = (code && code !== 'Auto-Generated') ? '/update-seller' : '/create-seller';
+            if(code && code !== 'Auto-Generated') payload.code = code;
+            try {
+                let res = await fetch(endpoint, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) }); let data = await res.json();
+                if(data.success) { alert(data.message || "Supplier Saved!"); if(data.seller_code) document.getElementById('pur-seller-code').value = data.seller_code; } else alert("❌ Error: " + data.message);
+            } catch(e) { alert("❌ Network Error."); }
+        }
+
+        function checkGrainCode(code, mode) {
+            let previewBox = document.getElementById(mode === 'create' ? 'item-preview-box' : (mode === 'edit' ? 'edit-item-preview-box' : (mode === 'purchase' ? 'pur-item-preview-box' : 'editpur-item-preview-box')));
+            let btn = document.getElementById(mode === 'create' ? 'add-to-manifest-btn' : (mode === 'edit' ? 'edit-add-to-manifest-btn' : (mode === 'purchase' ? 'pur-add-to-manifest-btn' : 'editpur-add-to-manifest-btn')));
+            let qtyInput = document.getElementById(mode === 'create' ? 'terminal-qty' : (mode === 'edit' ? 'edit-terminal-qty' : (mode === 'purchase' ? 'pur-terminal-qty' : 'editpur-terminal-qty')));
+
+            if (code.length === 3 && systemGrains[code]) {
+                let price = mode.includes('purchase') ? systemGrains[code].purchase_price : systemGrains[code].price;
+                previewBox.innerHTML = `<span class='text-emerald-600 dark:text-emerald-400 font-black'>Matched: ${systemGrains[code].name} (₹${price}/kg)</span>`;
+                btn.disabled = false; btn.classList.remove('cursor-not-allowed', 'bg-slate-300', 'text-slate-500'); btn.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-500', 'shadow-lg');
+                if(mode.includes('purchase')) { btn.classList.add('bg-amber-600'); }
+                qtyInput.disabled = false; qtyInput.focus({ preventScroll: true }); qtyInput.select();
+            } else {
+                previewBox.innerHTML = `Waiting for a valid 3-digit code...`;
+                btn.disabled = true; btn.classList.add('cursor-not-allowed', 'bg-slate-300', 'text-slate-500'); btn.classList.remove('bg-blue-600', 'bg-amber-600', 'text-white', 'hover:bg-blue-500', 'shadow-lg');
+                qtyInput.disabled = true;
+            }
+        }
+
+        function processTerminalEntry(mode) {
+            let codeInput = document.getElementById(mode === 'create' ? 'terminal-code' : (mode === 'edit' ? 'edit-terminal-code' : (mode === 'purchase' ? 'pur-terminal-code' : 'editpur-terminal-code')));
+            let qtyInput = document.getElementById(mode === 'create' ? 'terminal-qty' : (mode === 'edit' ? 'edit-terminal-qty' : (mode === 'purchase' ? 'pur-terminal-qty' : 'editpur-terminal-qty')));
+            let code = codeInput.value; let qty = parseFloat(qtyInput.value);
+            if (!systemGrains[code] || isNaN(qty) || qty <= 0) return;
+            
+            let targetManifest = mode === 'create' ? orderManifest : (mode === 'edit' ? editManifest : (mode === 'purchase' ? purchaseManifest : editPurchaseManifest));
+            let price = mode.includes('purchase') ? systemGrains[code].purchase_price : systemGrains[code].price;
+            let tax_rate = mode.includes('purchase') ? 0 : systemGrains[code].tax_rate;
+            
+            let batchId = 'AUTO';
+            if (mode === 'create' && document.getElementById('terminal-batch')) batchId = document.getElementById('terminal-batch').value;
+            else if (mode === 'purchase' && document.getElementById('pur-batch-id')) batchId = document.getElementById('pur-batch-id').value || 'New';
+            let metaString = (mode === 'create' || mode === 'purchase') ? ` [Lot: ${batchId}]` : '';
+
+            const uniqueRowId = 'row_' + Date.now() + Math.floor(Math.random() * 1000);
+            targetManifest[uniqueRowId] = { code: code, name: systemGrains[code].name + metaString, qty: qty, price: price, tax_rate: tax_rate };
+            codeInput.value = ''; qtyInput.value = mode.includes('purchase') ? '1000' : '50';
+            checkGrainCode('', mode); updateCartUI(mode); codeInput.focus({ preventScroll: true });
+        }
+
+        function removeManifestItem(code, mode) {
+            let targetManifest = mode === 'create' ? orderManifest : (mode === 'edit' ? editManifest : (mode === 'purchase' ? purchaseManifest : editPurchaseManifest));
+            delete targetManifest[code]; updateCartUI(mode);
+        }
+
+        function updateCartUI(mode) {
+            try {
+                let container = document.getElementById(mode === 'create' ? 'manifest-container' : (mode === 'edit' ? 'edit-manifest-container' : (mode === 'purchase' ? 'purchase-manifest-container' : 'editpur-manifest-container')));
+                let totalSpan = document.getElementById(mode === 'create' ? 'total-price' : (mode === 'edit' ? 'edit-total-price' : (mode === 'purchase' ? 'purchase-total-price' : 'editpur-total-price')));
+                let targetManifest = mode === 'create' ? orderManifest : (mode === 'edit' ? editManifest : (mode === 'purchase' ? purchaseManifest : editPurchaseManifest));
+                if (!container || !totalSpan) return;
+                
+                container.innerHTML = ''; let sub = 0; let tax = 0;
+                for (let c in targetManifest) {
+                    let item = targetManifest[c]; let itemTotal = item.qty * item.price; let iTx = itemTotal * ((item.tax_rate || 0) / 100); sub += itemTotal; tax += iTx;
+                    let tPill = item.tax_rate > 0 ? `<span class="bg-indigo-100 text-indigo-800 dark:bg-indigo-500/10 dark:text-indigo-400 text-[9px] px-1 rounded ml-1 border border-indigo-200 dark:border-indigo-500/20">+${item.tax_rate}% Tax</span>` : '';
+                    container.innerHTML += `<div class="flex justify-between items-center p-2 border-b-2 border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] rounded-lg group"><div class="flex flex-col"><span class="font-bold text-[11px] sm:text-xs text-slate-800 dark:text-slate-200">${item.name} <span class="text-slate-500">(${item.code})</span> ${tPill}</span><span class="text-[9px] font-black text-slate-500">${item.qty} kg @ ₹${item.price}</span></div><div class="flex items-center gap-2"><div class="font-black text-sm text-emerald-600 dark:text-amber-500">₹${itemTotal.toFixed(2)}</div><button type="button" onclick="removeManifestItem('${c}', '${mode}')" class="text-rose-500 hover:text-rose-700 bg-rose-100 hover:bg-rose-200 dark:bg-rose-500/10 dark:hover:bg-rose-500/20 px-2 py-1 rounded-lg transition-colors cursor-pointer">❌</button></div></div>`;
+                }
+                if (Object.keys(targetManifest).length === 0) { container.innerHTML = `<div class="flex flex-col items-center justify-center py-10 text-slate-500 gap-2"><span class="text-3xl">🛒</span><p class="text-xs font-bold tracking-wide">No entries loaded</p></div>`; }
+                let gt = sub + tax;
+                if (mode === 'create') { let subEl = document.getElementById('pos-subtotal'); let taxEl = document.getElementById('pos-tax'); if(subEl) subEl.innerText = `₹${sub.toFixed(2)}`; if(taxEl) taxEl.innerText = `₹${tax.toFixed(2)}`; cartTaxData.create = tax; } 
+                else if (mode === 'edit') { let es = document.getElementById('pos-edit-subtotal'); let et = document.getElementById('pos-edit-tax'); if(es) es.innerText = `₹${sub.toFixed(2)}`; if(et) et.innerText = `₹${tax.toFixed(2)}`; cartTaxData.edit = tax; }
+                totalSpan.innerText = `₹${gt.toFixed(2)}`;
+            } catch (err) {}
+        }
+
+        async function submitGrainOrder() {
+            if (Object.keys(orderManifest).length === 0) return alert("Your checkout manifest is empty.");
+            let items = Object.values(orderManifest); 
+            let sub = items.reduce((s, i) => s + (i.qty * i.price), 0); 
+            let total = sub + cartTaxData.create;
+            let paymentData = getPaymentPayload('create', total); 
+            if (!paymentData) return;
+            
+            let cName = document.getElementById('cust-name').value.trim(); 
+            let cPhone = document.getElementById('cust-phone').value.trim();
+            
+            if(!cName && !cPhone) { 
+                cName = "Walk-in Customer"; 
+                cPhone = "0000000000"; 
+                document.getElementById('cust-code').value = "WALKIN"; 
+            } else if (!cName || !cPhone) { 
+                return alert("Please provide both Name and Phone, or leave both blank for a Walk-in customer."); 
+            }
+            
+            let areaEl = document.getElementById('cust-area');
+            let safeAreaId = (areaEl && areaEl.value.trim() !== "") ? parseInt(areaEl.value) : null;
+            let payload = { 
+                customer_code: document.getElementById('cust-code').value || 'WALKIN', 
+                customer_name: cName, 
+                customer_phone: cPhone, 
+                customer_email: document.getElementById('cust-email').value, 
+                street: document.getElementById('cust-street').value, 
+                city: document.getElementById('cust-city').value, 
+                state: document.getElementById('cust-state').value, 
+                zipcode: document.getElementById('cust-zipcode').value, 
+                country: document.getElementById('cust-country').value, 
+                area_id: safeAreaId, 
+                fulfillment_mode: document.querySelector('input[name="fulfillment-opt"]:checked').value, 
+                items: items, 
+                total: total, 
+                tax_amount: cartTaxData.create, 
+                payment_method: paymentData.method, 
+                split_payments: paymentData.split_payments 
+            };
+            try {
+                let res = await fetch('/checkout', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) }); 
+                let data = await res.json();
+                if (data.success) { 
+                    alert(`✅ Order Committed Successfully!\nInvoice No: ${data.invoice_no}`); 
+                    window.location.reload(); 
+                } else { 
+                    alert("❌ Checkout Failed: " + data.message); 
+                }
+            } catch(e) { 
+                alert("❌ Critical Network Error during checkout."); 
+            }
+        }
+
+        async function submitSupplierPurchaseEntry() {
+            if (Object.keys(purchaseManifest).length === 0) return alert("Your purchase manifest is empty.");
+            let moistureEl = document.getElementById('pur-moisture');
+            if (moistureEl && parseFloat(moistureEl.value) > 15) { return alert("❌ Lab Rejection: Moisture content exceeds 15% maximum storage threshold. Order requires Executive Approval override to proceed."); }
+            let items = Object.values(purchaseManifest); let total = items.reduce((sum, i) => sum + (i.qty * i.price), 0);
+            let sName = document.getElementById('pur-seller-name').value; let sPhone = document.getElementById('pur-seller-phone').value;
+            if(!sName || !sPhone) return alert("Seller Name and Phone required.");
+            let payload = { seller_code: document.getElementById('pur-seller-code').value || 'Auto-Generated', seller_name: sName, seller_phone: sPhone, seller_address: document.getElementById('pur-seller-address').value, items: items, total_cost: total };
+            try {
+                let res = await fetch('/submit-purchase', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) }); let data = await res.json();
+                if (data.success) { alert("✅ Purchase Committed and Inventory Increased. GRN Generated."); window.location.reload(); } else alert("❌ Purchase Failed: " + data.message);
+            } catch(e) { alert("❌ Network Error."); }
+        }
+
+        function loadOrderDataForEditing() {
+            try {
+                let sel = document.getElementById('edit-target-id'); let oid = sel ? sel.value : null; if(!oid) return; let ord = historicalOrders[oid]; if(!ord) return alert("Order details missing.");
+                let elCode = document.getElementById('edit-cust-code'); if(elCode) elCode.value = ord.code || ''; let elName = document.getElementById('edit-cust-name'); if(elName) elName.value = ord.name || ''; let elPhone = document.getElementById('edit-cust-phone'); if(elPhone) elPhone.value = ord.phone || ''; let elAddress = document.getElementById('edit-cust-address'); if(elAddress) elAddress.value = ord.address || '';
+                if(ord.fulfillment_mode === 'Delivery') { let delOpt = document.getElementById('edit-fulfillment-delivery'); if(delOpt) delOpt.checked = true; } else { let takeOpt = document.getElementById('edit-fulfillment-takeaway'); if(takeOpt) takeOpt.checked = true; }
+                let payMethodEl = document.getElementById('edit-pay-method'); if(payMethodEl) { payMethodEl.value = ord.method || 'Cash'; toggleSplitPanel('edit'); }
+                editManifest = {};
+                if (Array.isArray(ord.items)) { ord.items.forEach((i, idx) => { const uniqueRowId = 'row_' + Date.now() + '_' + idx; editManifest[uniqueRowId] = { code: i.code || 'UNKNOWN', name: i.name || 'Unknown Item', qty: parseFloat(i.qty) || 0, price: parseFloat(i.price) || 0, tax_rate: (i.code && systemGrains[i.code]) ? (systemGrains[i.code].tax_rate || 0) : 0 }; }); }
+                updateCartUI('edit');
+                let hBox = document.getElementById('edit-history-box'); let hCon = document.getElementById('edit-history-container');
+                if(Array.isArray(ord.history) && ord.history.length > 0 && hCon) {
+                    hCon.innerHTML = ''; ord.history.forEach(h => { let dt = h.date || 'Unknown'; let ot = h.old_total !== undefined ? parseFloat(h.old_total).toFixed(2) : '0.00'; hCon.innerHTML += `<div class="bg-slate-100 dark:bg-[#1b2020] border-l-4 border-slate-400 dark:border-white/10 p-2 rounded text-[10px] text-slate-700 dark:text-slate-300"><span class="font-bold">${dt}</span> - Prev Total: ₹${ot}</div>`; });
+                    if(hBox) hBox.classList.remove('hidden');
+                } else { if(hBox) hBox.classList.add('hidden'); }
+            } catch(e) {}
+        }
+
+        async function submitModifiedOrder() {
+            let oid = document.getElementById('edit-target-id').value; if(!oid) return alert("Load an order first.");
+            let items = Object.values(editManifest); let sub = items.reduce((s, i) => s + (i.qty * i.price), 0); let total = sub + cartTaxData.edit; let pay = getPaymentPayload('edit', total); if (!pay) return;
+            let editAreaEl = document.getElementById('edit-cust-area');
+            let payload = { order_id: oid, customer_name: document.getElementById('edit-cust-name').value, customer_phone: document.getElementById('edit-cust-phone').value, customer_address: document.getElementById('edit-cust-address').value, fulfillment_mode: document.querySelector('input[name="edit-fulfillment-opt"]:checked').value, items: items, total: total, tax_amount: cartTaxData.edit, payment_method: pay.method, split_payments: pay.split_payments };
+            if (editAreaEl && editAreaEl.value) { payload.area_id = editAreaEl.value; }
+            try {
+                let r = await fetch('/edit-checkout', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) }); let d = await r.json();
+                if (d.success) { alert("✅ Order Updated"); window.location.reload(); } else { alert("❌ Failed: " + d.message); }
+            } catch(e) { alert("Error connecting to server."); }
+        }
+
+        function loadPurchaseDataForEditing() {
+            try {
+                let pid = document.getElementById('editpur-target-id').value; if(!pid) return; let pur = historicalPurchases[pid]; if(!pur) return alert("Purchase details missing.");
+                let elCode = document.getElementById('editpur-seller-code'); if(elCode) elCode.value = pur.seller_code || ''; let elName = document.getElementById('editpur-seller-name'); if(elName) elName.value = pur.seller_name || ''; let elPhone = document.getElementById('editpur-seller-phone'); if(elPhone) elPhone.value = pur.seller_phone || ''; let elAddress = document.getElementById('editpur-seller-address'); if(elAddress) elAddress.value = pur.seller_address || '';
+                editPurchaseManifest = {};
+                if (Array.isArray(pur.items)) { pur.items.forEach((i, idx) => { const uniqueRowId = 'row_' + Date.now() + '_' + idx; editPurchaseManifest[uniqueRowId] = { code: i.code || 'UNKNOWN', name: i.name || 'Unknown Item', qty: parseFloat(i.qty) || 0, price: parseFloat(i.price) || 0 }; }); }
+                updateCartUI('editpurchase');
+            } catch(e) {}
+        }
+
+        async function submitModifiedPurchase() {
+            let pid = document.getElementById('editpur-target-id').value; if(!pid) return alert("Load a purchase first.");
+            let items = Object.values(editPurchaseManifest); let total = items.reduce((s, i) => s + (i.qty * i.price), 0);
+            let payload = { purchase_id: pid, seller_name: document.getElementById('editpur-seller-name').value, seller_phone: document.getElementById('editpur-seller-phone').value, seller_address: document.getElementById('editpur-seller-address').value, items: items, total: total };
+            try {
+                let r = await fetch('/edit-purchase', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) }); let d = await r.json();
+                if (d.success) { alert("✅ Purchase Updated"); window.location.reload(); } else { alert("❌ Failed: " + d.message); }
+            } catch(e) { alert("Error connecting to server."); }
+        }
+
+        function filterEditDropdown() {
+            let q = document.getElementById('edit-filter-input').value.toLowerCase(); let sel = document.getElementById('edit-target-id');
+            for(let i=1; i<sel.options.length; i++) { let opt = sel.options[i]; if(opt.text.toLowerCase().includes(q)) opt.style.display = ""; else opt.style.display = "none"; }
+        }
+
+        async function submitExpense() {
+            let p = { category: document.getElementById('expense-category').value, amount: document.getElementById('expense-amount').value, notes: document.getElementById('expense-notes').value };
+            if(!p.amount || parseFloat(p.amount) <= 0) return alert("Valid amount required.");
+            try {
+                let r = await fetch('/api/add-expense', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(p) }); let d = await r.json();
+                if(d.success) { alert(d.message); window.location.reload(); } else { alert("❌ Error: " + d.message); }
+            } catch(e) { alert("Error connecting to server."); }
+        }
+
+        async function submitStockWriteOff() {
+            let p = { code: document.getElementById('writeoff-code').value, qty: document.getElementById('writeoff-qty').value, reason: document.getElementById('writeoff-reason').value };
+            if(!p.code || !p.qty || parseFloat(p.qty) <= 0) return alert("Code and valid quantity required.");
+            try {
+                let r = await fetch('/api/write-off-stock', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(p) }); let d = await r.json();
+                if(d.success) { alert(d.message); window.location.reload(); } else { alert("❌ Error: " + d.message); }
+            } catch(e) { alert("Error connecting to server."); }
+        }
+
+        async function saveCommodity() {
+            let p = { original_code: document.getElementById('catalog-original-code').value, code: document.getElementById('catalog-code').value, name: document.getElementById('catalog-name').value, purchase_price: document.getElementById('catalog-pur-price') ? document.getElementById('catalog-pur-price').value : 0, sales_price: document.getElementById('catalog-sal-price').value, tax_rate: document.getElementById('catalog-tax-rate').value };
+            if(!p.code || !p.name) return alert("Code and Name required");
+            try {
+                let r = await fetch('/api/save-product', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(p) }); let d = await r.json();
+                if(d.success) { alert(d.message); window.location.reload(); } else { alert("❌ Error: " + d.message); }
+            } catch(e) { alert("Error connecting to server."); }
+        }
+
+        async function deleteCommodity(code) {
+            if(!confirm(`Delete commodity ${code}?`)) return;
+            try {
+                let r = await fetch('/api/delete-product', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({code: code}) }); let d = await r.json();
+                if(d.success) { alert(d.message); window.location.reload(); } else { alert("❌ Error: " + d.message); }
+            } catch(e) { alert("Error connecting to server."); }
+        }
+
+        async function submitStockOverwrite() {
+            let c = document.getElementById('stock-adjust-code').value; let q = document.getElementById('stock-adjust-value').value; if(!c || !q) return alert("Inputs required.");
+            try {
+                let r = await fetch('/update-stock', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({code: c, new_stock: q}) }); let d = await r.json();
+                if(d.success) { alert(d.message); window.location.reload(); } else { alert("❌ Error: " + d.message); }
+            } catch(e) { alert("Error connecting to server."); }
+        }
+
+        async function executeOrderDeletion() {
+            let id = document.getElementById('delete-order-select').value; if(!id) return; if(!confirm("⚠️ DANGER: Erase and restock?")) return;
+            try {
+                let r = await fetch('/delete-order', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({order_id: id}) }); let d = await r.json();
+                if(d.success) { alert("Database row erased cleanly."); window.location.reload(); } else { alert("❌ Error: " + d.message); }
+            } catch(e) { alert("Error connecting to server."); }
+        }
+
+        async function createProfileWorkspace(event) {
+            event.preventDefault(); const btn = document.getElementById('setup-submit-btn'); const msg = document.getElementById('setup-status-msg'); btn.innerText = "Processing..."; btn.classList.add('opacity-70', 'cursor-not-allowed'); msg.classList.add('hidden');
+            const code = document.getElementById('setup-emp-code').value; const isE = !!code; const p = { name: document.getElementById('setup-name').value, phone: document.getElementById('setup-phone').value, role: document.getElementById('setup-role').value, username: document.getElementById('setup-username').value, password: document.getElementById('setup-password').value };
+            if (isE) p.code = code;
+            try {
+                const r = await fetch(isE ? '/update-employee' : '/create-employee', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(p) }); const d = await r.json(); msg.classList.remove('hidden');
+                if (d.success) {
+                    msg.className = "mb-4 p-3 bg-emerald-100 dark:bg-emerald-500/10 border-2 border-emerald-400 dark:border-emerald-500/20 rounded-xl text-xs font-bold text-emerald-800 dark:text-emerald-400 text-center"; msg.innerHTML = `✅ ${d.message}`;
+                    if(d.code) msg.innerHTML += `<br><span class="text-[9px] font-mono mt-1 block text-emerald-700 dark:text-emerald-300">ID: ${d.code}</span>`;
+                    document.getElementById('setup-form').reset(); setTimeout(()=>window.location.reload(), 2000);
+                } else { msg.className = "mb-4 p-3 bg-rose-100 dark:bg-rose-500/10 border-2 border-rose-400 dark:border-rose-500/20 rounded-xl text-xs font-bold text-rose-800 dark:text-rose-400 text-center"; msg.innerText = "❌ Warning: " + d.message; }
+            } catch (e) { msg.classList.remove('hidden'); msg.className = "mb-4 p-3 bg-rose-100 dark:bg-rose-500/10 border-2 border-rose-400 dark:border-rose-500/20 rounded-xl text-xs font-bold text-rose-800 dark:text-rose-400 text-center"; msg.innerText = "❌ Network Error: " + e.message; } finally { btn.innerText = isE ? "Update Profile" : "Authorize & Create"; btn.classList.remove('opacity-70', 'cursor-not-allowed'); }
+        }
+
+        function deleteEmployee(code) {
+            if(!confirm(`Remove Employee ${code}?`)) return;
+            fetch('/delete-employee', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({code: code}) }).then(r=>r.json()).then(d=>{ if(d.success) { alert(d.message); window.location.reload(); } else { alert(d.message); } });
+        }
+
+        function loadEmployeeForEdit(code, name, role, user, phone) {
+            switchTabWorkspace('adminsetup'); document.getElementById('setup-emp-code').value = code; document.getElementById('setup-name').value = name; document.getElementById('setup-phone').value = phone; document.getElementById('setup-role').value = role; document.getElementById('setup-username').value = user; document.getElementById('setup-submit-btn').innerText = "Update Profile";
+        }
+
+        function loadCommodityForEdit(code, name, pP, sP, tR) {
+            switchTabWorkspace('catalog'); document.getElementById('catalog-original-code').value = code; document.getElementById('catalog-code').value = code; document.getElementById('catalog-name').value = name;
+            let pI = document.getElementById('catalog-pur-price'); if(pI) pI.value = pP; document.getElementById('catalog-sal-price').value = sP; document.getElementById('catalog-tax-rate').value = tR || 0;
+            document.getElementById('catalog-form-title').innerText = "✏️ Edit Commodity"; document.getElementById('catalog-save-btn').innerText = "Update Product";
+        }
+
+        function resetCommodityForm() {
+            document.getElementById('catalog-original-code').value = ""; document.getElementById('catalog-code').value = ""; document.getElementById('catalog-name').value = "";
+            let pI = document.getElementById('catalog-pur-price'); if(pI && pI.type !== "hidden") pI.value = ""; document.getElementById('catalog-sal-price').value = ""; document.getElementById('catalog-tax-rate').value = "0";
+            document.getElementById('catalog-form-title').innerText = "🌾 Add Commodity"; document.getElementById('catalog-save-btn').innerText = "Save";
+        }
+
+        async function loadPendingOrders() {
+            document.getElementById('pending-list-container').innerHTML = '<p class="text-center py-10 font-bold">Loading...</p>';
+            try { let r = await fetch('/api/pending-sales'); let d = await r.json(); if(d.success) { globalPendingOrders = d.orders; renderPendingOrders(globalPendingOrders); } } catch(e) {}
+        }
+
+        function renderPendingOrders(ordersList) {
+            let c = document.getElementById('pending-list-container'); c.innerHTML = '';
+            if(ordersList.length === 0) { c.innerHTML = '<p class="text-xs text-center py-10 font-bold text-slate-500">No pending dues.</p>'; return; }
+            ordersList.forEach(o => { c.innerHTML += `<div onclick="showPendingDetails(${o.id})" class="bg-white dark:bg-[#1b2020] p-3 rounded-lg shadow-sm border border-slate-200 dark:border-white/5 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/[0.02] mb-2 transition-colors"><div class="flex justify-between items-center mb-1"><span class="font-bold text-xs text-slate-900 dark:text-white">${o.invoice_no}</span><span class="text-rose-600 dark:text-rose-400 font-bold text-xs">₹${o.total.toFixed(2)}</span></div><div class="text-[10px] text-slate-500 dark:text-slate-400 font-bold">${o.customer_name} | ${o.phone}</div></div>`; });
+        }
+
+        function filterPendingOrders() {
+            let q = document.getElementById('pending-search-input').value.toLowerCase(); let f = globalPendingOrders.filter(o => o.invoice_no.toLowerCase().includes(q) || o.customer_name.toLowerCase().includes(q) || o.customer_code.toLowerCase().includes(q)); renderPendingOrders(f);
+        }
+
+        function showPendingDetails(id) {
+            let o = globalPendingOrders.find(x => x.id === id); if(!o) return;
+            document.getElementById('pending-detail-panel').classList.remove('hidden'); document.getElementById('pending-detail-panel').classList.add('flex'); document.getElementById('pending-detail-invoice').innerText = o.invoice_no; document.getElementById('pending-detail-name').innerText = o.customer_name; document.getElementById('pending-detail-phone').innerText = o.phone; document.getElementById('pending-detail-total').innerText = `₹${o.total.toFixed(2)}`; document.getElementById('pending-settle-id').value = o.id;
+            let c = document.getElementById('pending-detail-items'); c.innerHTML = '';
+            if (Array.isArray(o.items)) { o.items.forEach(i=>{ c.innerHTML += `<div class="flex justify-between border-b dark:border-white/5 pb-1 mb-1"><span class="font-bold text-[10px] text-slate-800 dark:text-slate-200">${i.name || 'Item'}</span><span class="font-mono text-[9px] text-slate-600 dark:text-slate-400">${parseFloat(i.qty || 0)} kg</span></div>`; }); }
+        }
+
+        async function settlePendingPayment() {
+            let id = document.getElementById('pending-settle-id').value; if(!id) return; let o = globalPendingOrders.find(x => x.id == id); let pay = getPaymentPayload('pending', o.total); if(!pay) return;
+            try { let r = await fetch('/api/settle-sale', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({order_id:id, method:pay.method, split_payments:pay.split_payments}) }); let d = await r.json(); if(d.success){ alert("✅ Settled"); window.location.reload(); } else { alert("❌ Error"); } } catch(e){}
+        }
+
+        function filterLookupOrdersByCode() { let q = document.getElementById('filter-lookup-code').value.toLowerCase(); let sel = document.getElementById('lookup-order-select'); for(let i=1; i<sel.options.length; i++){ let o = sel.options[i]; if(o.getAttribute('data-custcode').toLowerCase().includes(q)) o.style.display=""; else o.style.display="none"; } }
+        function filterLookupOrdersByInvoice() { let q = document.getElementById('filter-lookup-invoice').value.toLowerCase(); let sel = document.getElementById('lookup-order-select'); for(let i=1; i<sel.options.length; i++){ let o = sel.options[i]; if(o.getAttribute('data-invoiceno').toLowerCase().includes(q)) o.style.display=""; else o.style.display="none"; } }
+        function resetLookupFilter() { document.getElementById('filter-lookup-code').value=''; document.getElementById('filter-lookup-invoice').value=''; let sel = document.getElementById('lookup-order-select'); for(let i=1; i<sel.options.length; i++) sel.options[i].style.display=""; }
+
+        function populateOrderDetailsView(id) {
+            try {
+                if(!id){ document.getElementById('lookup-display-box').classList.add('hidden'); document.getElementById('lookup-placeholder-msg').classList.remove('hidden'); return; }
+                let o = historicalOrders[id]; if(!o) { alert("Order details missing."); return; }
+                document.getElementById('lookup-placeholder-msg').classList.add('hidden'); document.getElementById('lookup-display-box').classList.remove('hidden'); document.getElementById('view-receipt-id').innerText = o.invoice_no; document.getElementById('view-receipt-cust-code').innerText = `CUSTOMER CODE: ${o.code}`; document.getElementById('view-receipt-name').innerText = o.name; document.getElementById('view-receipt-email').innerText = o.email || 'N/A'; document.getElementById('view-receipt-phone').innerText = o.phone; document.getElementById('view-receipt-method').innerText = o.method; document.getElementById('view-receipt-address').innerText = o.address; document.getElementById('view-receipt-total').innerText = `₹${parseFloat(o.total || 0).toFixed(2)}`;
+                let c = document.getElementById('view-receipt-items-container'); c.innerHTML='';
+              if (Array.isArray(o.items)) { o.items.forEach(i=>{ c.innerHTML += `<div class="flex justify-between border-b dark:border-white/5 pb-1.5 mb-1.5"><span class="font-bold text-[10px] text-slate-800 dark:text-slate-200">${i.name || 'Item'}</span><span class="font-mono text-[10px] text-slate-600 dark:text-slate-400">${parseFloat(i.qty || 0)} kg @ ₹${parseFloat(i.price || 0)}</span></div>`; }); }
+                let hBox = document.getElementById('view-receipt-history-box'); let hCon = document.getElementById('view-receipt-history-container');
+                if(Array.isArray(o.history) && o.history.length > 0 && hCon) {
+                    hCon.innerHTML = ''; o.history.forEach(h => { let dt = h.date || 'Unknown'; let ot = h.old_total !== undefined ? parseFloat(h.old_total).toFixed(2) : '0.00'; hCon.innerHTML += `<div class="bg-slate-200 dark:bg-[#1b2020] border-l-4 border-amber-400 p-2 rounded text-[9px] text-slate-700 dark:text-slate-300"><span class="font-bold">${dt}</span> - Previous Bill Total: ₹${ot}</div>`; });
+                    if(hBox) hBox.classList.remove('hidden');
+                } else { if(hBox) hBox.classList.add('hidden'); }
+            } catch(e) {}
+        }
+
+        function printArchivedReceipt() {
+            let id = document.getElementById('lookup-order-select').value; if(!id) return alert("Select an order first."); let o = historicalOrders[id]; if(!o) return;
+            let printContent = `<div style="font-family: monospace; font-size: 12px; width: 76mm; padding: 10px;"><div style="text-align: center; border-bottom: 2px dashed black; padding-bottom: 10px; margin-bottom: 10px;"><h1 style="font-size: 16px; margin: 0;">PZ GRAIN ENT.</h1><p style="margin: 5px 0;">INVOICE COPY</p><p style="margin: 0; font-size: 10px;">BILL NO: ${o.invoice_no}</p></div><div style="border-bottom: 1px dashed black; padding-bottom: 10px; margin-bottom: 10px;"><p style="margin: 2px 0;"><strong>CUSTOMER:</strong> ${o.name}</p><p style="margin: 2px 0;"><strong>PHONE:</strong> ${o.phone}</p><p style="margin: 2px 0;"><strong>METHOD:</strong> ${o.method}</p></div><table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;"><thead><tr style="border-bottom: 1px solid black;"><th style="text-align: left;">ITEM</th><th style="text-align: right;">QTY</th><th style="text-align: right;">AMT</th></tr></thead><tbody>`;
+            if (Array.isArray(o.items)) { o.items.forEach(i => { let itemName = (i.name || 'Item').substring(0, 15); let itemQty = parseFloat(i.qty || 0); let itemTotal = itemQty * parseFloat(i.price || 0); printContent += `<tr><td style="padding: 3px 0;">${itemName}</td><td style="text-align: right;">${itemQty}</td><td style="text-align: right;">${itemTotal.toFixed(2)}</td></tr>`; }); }
+            printContent += `</tbody></table><div style="border-top: 2px dashed black; padding-top: 10px; text-align: right; font-size: 14px; font-weight: bold;">TOTAL: Rs ${parseFloat(o.total || 0).toFixed(2)}</div><div style="text-align: center; margin-top: 20px; font-size: 10px;"><p>Thank you for your business!</p></div></div>`;
+            let printWindow = window.open('', '', 'width=300,height=600'); printWindow.document.write(printContent); printWindow.document.close(); printWindow.focus(); setTimeout(() => { printWindow.print(); printWindow.close(); }, 250);
+        }
+
+        function downloadPDFReceipt() {
+            const el = document.getElementById('lookup-display-box'); el.classList.remove('hidden'); el.style.backgroundColor = 'white'; el.style.color = 'black';
+            const originalElements = el.querySelectorAll('*'); const originalClasses = Array.from(originalElements).map(child => child.className);
+            originalElements.forEach(child => { child.classList.remove('dark:bg-[#1b2020]', 'dark:text-white', 'dark:border-white/5', 'dark:text-slate-400', 'dark:text-slate-200', 'dark:text-slate-300', 'dark:bg-[#0e1111]'); if(child.tagName === 'SPAN' || child.tagName === 'P' || child.tagName === 'H3') { child.style.color = '#1e293b'; } });
+            const opt = { margin: 0.5, filename: `Receipt_${document.getElementById('view-receipt-id').innerText}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
+            html2pdf().set(opt).from(el).save().then(() => { el.style.backgroundColor = ''; el.style.color = ''; originalElements.forEach((child, index) => { child.className = originalClasses[index]; child.style.color = ''; }); });
+        }
+
+        function downloadPNL() {
+            const element = document.getElementById('pnl-document-body'); const wasDark = document.documentElement.classList.contains('dark'); 
+            if (wasDark) { document.documentElement.classList.remove('dark'); element.style.backgroundColor = 'white'; element.style.color = 'black'; const children = element.querySelectorAll('*'); children.forEach(child => { if(child.tagName === 'SPAN' || child.tagName === 'H1' || child.tagName === 'H2') { child.style.color = 'black'; } }); }
+            const opt = { margin: 0.5, filename: `PZ_Grain_PnL_${new Date().toISOString().split('T')[0]}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
+            html2pdf().set(opt).from(element).save().then(() => { if (wasDark) { document.documentElement.classList.add('dark'); element.style.backgroundColor = ''; element.style.color = ''; const children = element.querySelectorAll('*'); children.forEach(child => { child.style.color = ''; }); } });
+        }
+        
+        async function triggerManualBackup() { try { let r = await fetch('/api/trigger-backup', { method: 'POST' }); let d = await r.json(); if(d.success) alert("✅ Backup Successful:\n\n" + d.message); else alert("❌ Backup Failed: " + d.message); } catch(e) {} }
+        async function updateBackupSchedule() { let hr = document.getElementById('backup-hour').value; let mn = document.getElementById('backup-min').value; if(hr==='' || mn==='') return alert("Enter valid hour and minute values."); try { let r = await fetch('/api/update-backup-scheduler', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({hour: parseInt(hr), minute: parseInt(mn)}) }); let d = await r.json(); if(d.success) alert("✅ " + d.message); else alert("❌ Error: " + d.message); } catch(e) {} }
+        
+        async function generateAccountStatement() {
+            let code = document.getElementById('report-cust-code').value.trim(); if(!code) return alert("Enter a valid Customer Code.");
+            let container = document.getElementById('account-statement-output'); container.innerHTML = "<p class='font-bold text-slate-500 text-center py-4 text-[10px]'>Processing ledger...</p>";
+            try {
+                let r = await fetch(`/api/account-statement?code=${encodeURIComponent(code)}`); let d = await r.json();
+                if(d.success) {
+                    let html = `<div class="bg-slate-100 dark:bg-[#1b2020] p-2 rounded-lg border border-slate-300 dark:border-white/[0.08] mb-2"><div class="flex flex-col sm:flex-row justify-between font-black text-slate-800 dark:text-white gap-1"><span class="text-xs">${d.customer_name}</span><span class="text-[10px] text-rose-600 dark:text-rose-400">Total Dues: ₹${d.total_outstanding.toFixed(2)}</span></div></div>`;
+                    if(d.statement.length === 0) { html += "<p class='font-bold text-[10px] text-slate-500 dark:text-slate-400'>No history found.</p>"; }
+                    d.statement.forEach(s => { let badge = s.status === 'Pending' ? 'bg-rose-100 dark:bg-rose-500/10 text-rose-800 dark:text-rose-400 border-rose-300 dark:border-rose-500/20' : 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-400 border-emerald-300 dark:border-emerald-500/20'; html += `<div class="flex justify-between items-center py-1.5 border-b border-slate-200 dark:border-white/5 last:border-0"><div class="flex flex-col"><span class="font-bold text-[10px] text-slate-800 dark:text-slate-200">${s.invoice}</span><span class="text-[8px] text-slate-500 dark:text-slate-400">${s.date}</span></div><div class="flex items-center gap-1.5"><span class="font-black text-[10px] text-slate-900 dark:text-white">₹${s.amount.toFixed(2)}</span><span class="px-1.5 py-0.5 rounded text-[8px] font-black uppercase border ${badge}">${s.status}</span></div></div>`; });
+                    container.innerHTML = html;
+                } else container.innerHTML = `<p class='font-bold text-rose-500 text-[10px]'>${d.message}</p>`;
+            } catch(e) {}
+        }
+
+        async function generateProductStatement() {
+            let code = document.getElementById('report-prod-code').value.trim(); if(!code) return alert("Enter a valid Product Code.");
+            let container = document.getElementById('product-statement-output'); container.innerHTML = "<p class='font-bold text-slate-500 text-center py-4 text-[10px]'>Processing velocity...</p>";
+            try {
+                let r = await fetch(`/api/product-statement?code=${encodeURIComponent(code)}`); let d = await r.json();
+                if(d.success) {
+                    let html = `<div class="bg-slate-100 dark:bg-[#1b2020] p-2 rounded-lg border border-slate-300 dark:border-white/[0.08] mb-2"><div class="flex flex-col sm:flex-row justify-between font-black text-slate-800 dark:text-white gap-1"><span class="text-xs">${d.product_name}</span><span class="text-[10px] text-blue-700 dark:text-amber-500">Current Stock: ${d.current_stock} kg</span></div></div>`;
+                    if(d.ledger.length === 0) { html += "<p class='font-bold text-[10px] text-slate-500 dark:text-slate-400'>No movement history.</p>"; }
+                    d.ledger.forEach(l => { let color = l.type === 'IN' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'; let symbol = l.type === 'IN' ? '+' : '-'; html += `<div class="flex justify-between items-center py-1.5 border-b border-slate-200 dark:border-white/5 last:border-0"><div class="flex flex-col"><span class="font-bold text-[10px] text-slate-800 dark:text-slate-200">${l.ref}</span><span class="text-[8px] text-slate-500 dark:text-slate-400">${l.date}</span></div><div class="flex items-center gap-1.5"><span class="font-black text-[10px] ${color}">${symbol}${l.qty} kg</span><span class="font-mono text-[9px] text-slate-600 dark:text-slate-400">@ ₹${l.price.toFixed(2)}</span></div></div>`; });
+                    container.innerHTML = html;
+                } else container.innerHTML = `<p class='font-bold text-rose-500 text-[10px]'>${d.message}</p>`;
+            } catch(e) {}
+        }
+
+        async function generateDailyStockSummary() {
+            let container = document.getElementById('daily-stock-output'); container.innerHTML = "<p class='font-bold text-slate-500 text-center py-4 text-[10px]'>Processing EOD metrics...</p>";
+            try {
+                let r = await fetch(`/api/daily-stock-summary`); let d = await r.json();
+                if(d.success) {
+                    let html = `<table class="w-full text-left text-[9px] sm:text-[10px] whitespace-nowrap"><thead class="bg-slate-200 dark:bg-[#1b2020] uppercase font-black text-slate-700 dark:text-slate-300"><tr><th class="p-2">Product</th><th class="p-2 text-right">Start (00:00)</th><th class="p-2 text-right text-emerald-600 dark:text-emerald-400">Inbound</th><th class="p-2 text-right text-rose-600 dark:text-rose-400">Outbound</th><th class="p-2 text-right text-blue-600 dark:text-amber-500">Balance</th></tr></thead><tbody class="divide-y border-b dark:divide-white/5 dark:border-white/5">`;
+                    d.summary.forEach(s => { html += `<tr class="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors"><td class="p-2 font-bold text-slate-900 dark:text-slate-200">${s.name} <span class="text-[8px] font-mono ml-0.5 text-slate-500 dark:text-slate-400">(${s.code})</span></td><td class="p-2 text-right font-mono text-slate-900 dark:text-slate-200">${s.starting}</td><td class="p-2 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">+${s.purchased}</td><td class="p-2 text-right font-mono font-bold text-rose-600 dark:text-rose-400">-${s.sold}</td><td class="p-2 text-right font-mono font-black text-blue-700 dark:text-amber-500">${s.current}</td></tr>`; });
+                    html += `</tbody></table>`; container.innerHTML = html;
+                } else container.innerHTML = `<p class='font-bold text-rose-500 text-[10px]'>Error.</p>`;
+            } catch(e) {}
+        }
+
+        // --- CONTRACT MANAGEMENT LOGIC ---
+        function openContractModal() {
+            document.getElementById('contract-modal').classList.remove('hidden');
+            document.getElementById('contract-modal').classList.add('flex');
+        }
+
+        function closeContractModal() {
+            document.getElementById('contract-modal').classList.add('hidden');
+            document.getElementById('contract-modal').classList.remove('flex');
+            document.getElementById('contract-qty').value = '';
+            document.getElementById('contract-rate').value = '';
+        }
+
+        async function submitNewContract() {
+            let payload = {
+                customer_code: document.getElementById('contract-customer').value,
+                product_code: document.getElementById('contract-product').value,
+                qty: document.getElementById('contract-qty').value,
+                rate: document.getElementById('contract-rate').value
+            };
+
+            if(!payload.customer_code || !payload.product_code || !payload.qty || !payload.rate) {
+                return alert("Please fill out all contract parameters.");
+            }
+
+            try {
+                let r = await fetch('/api/create-contract', { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify(payload) 
+                });
+                let d = await r.json();
+                
+                if(d.success) {
+                    alert(d.message);
+                    closeContractModal();
+                    loadContracts(); // Refresh table live
+                } else {
+                    alert("❌ Error: " + d.message);
+                }
+            } catch(e) {
+                alert("Error connecting to server.");
+            }
+        }
+
+        async function loadContracts() {
+            let tbody = document.getElementById('contracts-table-body');
+            if(!tbody) return;
+            tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-xs font-bold text-slate-500">Loading contracts...</td></tr>';
+            
+            try {
+                let r = await fetch('/api/get-contracts');
+                let d = await r.json();
+                
+                if(d.success) {
+                    tbody.innerHTML = '';
+                    if(d.contracts.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-xs font-bold text-slate-500">No active contracts found in the ledger.</td></tr>';
+                        return;
+                    }
+                    
+                    d.contracts.forEach(c => {
+                        let statusColor = c.status === 'Active' ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/10 border-emerald-300 dark:border-emerald-500/20' : 'text-slate-700 dark:text-slate-400 bg-slate-200 dark:bg-white/5 border-slate-300 dark:border-white/10';
+                        
+                        tbody.innerHTML += `
+                        <tr class="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+                            <td class="p-3 font-mono font-black text-indigo-700 dark:text-amber-500">${c.id}</td>
+                            <td class="p-3 font-extrabold text-slate-900 dark:text-slate-200">${c.customer}</td>
+                            <td class="p-3 font-bold text-slate-600 dark:text-slate-400">${c.product}</td>
+                            <td class="p-3 font-black text-slate-900 dark:text-white">${c.qty.toLocaleString()} kg</td>
+                            <td class="p-3 font-mono font-black text-emerald-600 dark:text-emerald-400">₹${c.rate.toFixed(2)}</td>
+                            <td class="p-3 text-right">
+                                <span class="px-2 py-1 rounded text-[9px] uppercase font-black border ${statusColor}">${c.status}</span>
+                            </td>
+                        </tr>`;
+                    });
+                }
+            } catch(e) {
+                tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-xs font-bold text-rose-500">Failed to load contracts.</td></tr>';
+            }
+        }
+
+        document.getElementById("terminal-code").addEventListener("keyup", function(e) { if (e.key === "Enter") processTerminalEntry('create'); }); 
+        document.getElementById("terminal-qty").addEventListener("keyup", function(e) { if (e.key === "Enter") processTerminalEntry('create'); }); 
+        document.getElementById("edit-terminal-code").addEventListener("keyup", function(e) { if (e.key === "Enter") processTerminalEntry('edit'); }); 
+        document.getElementById("edit-terminal-qty").addEventListener("keyup", function(e) { if (e.key === "Enter") processTerminalEntry('edit'); }); 
+        document.getElementById("pur-terminal-code").addEventListener("keyup", function(e) { if (e.key === "Enter") processTerminalEntry('purchase'); }); 
+        document.getElementById("pur-terminal-qty").addEventListener("keyup", function(e) { if (e.key === "Enter") processTerminalEntry('purchase'); }); 
+        document.getElementById("editpur-terminal-code").addEventListener("keyup", function(e) { if (e.key === "Enter") processTerminalEntry('editpurchase'); }); 
+        document.getElementById("editpur-terminal-qty").addEventListener("keyup", function(e) { if (e.key === "Enter") processTerminalEntry('editpurchase'); }); 
+        document.getElementById("filter-lookup-code").addEventListener("keyup", function(e) { if (e.key === "Enter") filterLookupOrdersByCode(); }); 
+        document.getElementById("filter-lookup-invoice").addEventListener("keyup", function(e) { if (e.key === "Enter") filterLookupOrdersByInvoice(); });
+    </script>
+</body>
+</html>

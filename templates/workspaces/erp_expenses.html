@@ -1,0 +1,81 @@
+<!-- WORKSPACE: ERP OPERATIONAL EXPENSES -->
+<div id="menu-workspace-erp-expenses" class="flex-1 p-4 md:p-8 overflow-y-auto hidden workspace-pane bg-pzdark flex-col gap-6 custom-scrollbar animate-page-fade">
+    <div class="max-w-7xl mx-auto w-full space-y-6">
+        
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-white/[0.08] pb-4 gap-4">
+            <div>
+                <h2 class="text-2xl sm:text-3xl font-black text-white uppercase tracking-widest drop-shadow-md">Operational Expenses</h2>
+                <p class="text-xs font-medium text-slate-400 mt-1 tracking-wider">Log overhead costs, utilities, transport, and facility expenses</p>
+            </div>
+            <div class="text-[10px] sm:text-xs font-bold text-rose-400 bg-rose-500/10 px-4 py-2 rounded-xl border border-rose-500/20 flex items-center gap-3 backdrop-blur-md">
+                <span class="uppercase tracking-widest">Overhead Control</span>
+            </div>
+        </div>
+
+        <!-- Expense Logger Form Card -->
+        <div class="bg-pzpanel p-6 rounded-2xl border border-white/[0.05] shadow-lg animate-slide-up">
+            <h3 class="text-sm font-black text-white uppercase tracking-widest mb-4 border-b border-white/[0.05] pb-3">Log New Expense</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div class="space-y-2">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest">Expense Category</label>
+                    <select id="expense-category" class="w-full bg-pzdark border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-amber-500/50 appearance-none cursor-pointer">
+                        <option value="Rent/Lease">Rent/Lease</option>
+                        <option value="Electricity/Utilities">Utilities</option>
+                        <option value="Transport/Fuel">Transport & Fuel</option>
+                        <option value="Labor/Salaries">Labor & Salaries</option>
+                        <option value="Maintenance">Facility Maintenance</option>
+                        <option value="Other">Other Overhead</option>
+                    </select>
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest">Amount (₹)</label>
+                    <input type="number" id="expense-amount" placeholder="0.00" class="w-full bg-pzdark border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white font-mono outline-none focus:border-amber-500/50">
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest">Notes / Vendor</label>
+                    <input type="text" id="expense-notes" placeholder="e.g. Monthly warehouse lease" class="w-full bg-pzdark border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-amber-500/50">
+                </div>
+            </div>
+            <div class="mt-4 flex justify-end">
+                <button type="button" onclick="submitExpense()" class="bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:bg-right text-pzdark font-black text-xs uppercase tracking-widest px-6 py-3 rounded-xl shadow-[0_0_20px_rgba(245,158,11,0.2)] transition-all duration-300 active:scale-95 cursor-pointer border border-amber-300/30">
+                    Log Expense Entry
+                </button>
+            </div>
+        </div>
+
+        <!-- Expenses Ledger Table -->
+        <div class="bg-pzpanel border border-white/[0.05] rounded-2xl overflow-hidden shadow-lg animate-slide-up" style="animation-delay: 0.1s;">
+            <div class="px-6 py-5 border-b border-white/[0.05] bg-white/[0.02]">
+                <h3 class="text-sm font-black text-white uppercase tracking-widest">Expense Journal</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead class="text-[10px] text-slate-500 bg-pzdark uppercase tracking-widest font-black">
+                        <tr>
+                            <th class="p-4 pl-6">Timestamp</th>
+                            <th class="p-4">Category</th>
+                            <th class="p-4">Notes & Description</th>
+                            <th class="p-4 text-right pr-6">Amount Deducted</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/[0.05]">
+                        {% for ex in expenses %}
+                        <tr class="hover:bg-white/[0.02] transition-colors">
+                            <td class="p-4 pl-6 font-mono text-xs text-slate-400">{{ ex.date }}</td>
+                            <td class="p-4 font-bold text-white">{{ ex.category }}</td>
+                            <td class="p-4 text-slate-400 text-xs">{{ ex.notes or 'N/A' }}</td>
+                            <td class="p-4 font-mono font-black text-right pr-6 text-rose-400">-₹{{ "{:,.2f}".format(ex.amount) }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="p-8 text-center text-slate-500 text-xs font-bold uppercase tracking-widest">No operational expenses logged in the ledger.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>

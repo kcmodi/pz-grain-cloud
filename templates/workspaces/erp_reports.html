@@ -1,0 +1,135 @@
+<!-- WORKSPACE: ERP FINANCIAL ANALYTICS & REPORTS -->
+<div id="menu-workspace-erp-reports" class="flex-1 p-4 md:p-8 overflow-y-auto hidden workspace-pane bg-pzdark flex-col gap-6 custom-scrollbar animate-page-fade">
+    <div class="max-w-7xl mx-auto w-full space-y-6">
+        
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-white/[0.08] pb-4 gap-4">
+            <div>
+                <h2 class="text-2xl sm:text-3xl font-black text-white uppercase tracking-widest drop-shadow-md">Financial Analytics & Reports</h2>
+                <p class="text-xs font-medium text-slate-400 mt-1 tracking-wider">Account ledgers, velocity reports, AR aging, and executive income statements</p>
+            </div>
+            <div class="text-[10px] sm:text-xs font-bold text-amber-500 bg-amber-500/10 px-4 py-2 rounded-xl border border-amber-500/20 flex items-center gap-3 backdrop-blur-md">
+                <span class="uppercase tracking-widest">Real-time Accounting Engine</span>
+            </div>
+        </div>
+
+        <!-- Statements Generator Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- Account Statement Card -->
+            <div class="bg-pzpanel p-6 rounded-2xl border border-white/[0.05] shadow-lg space-y-4 animate-slide-up">
+                <h3 class="text-sm font-black text-amber-500 uppercase tracking-widest border-b border-white/[0.05] pb-3">Client Account Statement</h3>
+                <div class="flex gap-2">
+                    <input type="text" id="report-cust-code" placeholder="Enter Customer Code (e.g. CUST-01)" class="w-full bg-pzdark border border-white/[0.08] text-white rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-amber-500/50">
+                    <button type="button" onclick="generateAccountStatement()" class="bg-amber-500 hover:bg-amber-400 text-pzdark font-black text-xs uppercase px-5 py-3 rounded-xl active:scale-95 transition-all shadow-md shrink-0">Run</button>
+                </div>
+                <div id="account-statement-output" class="mt-3 max-h-48 overflow-y-auto space-y-2 text-xs custom-scrollbar">
+                    <p class="text-slate-500 text-center py-6 font-bold uppercase tracking-wider">Awaiting client code query...</p>
+                </div>
+            </div>
+
+            <!-- Velocity Statement Card -->
+            <div class="bg-pzpanel p-6 rounded-2xl border border-white/[0.05] shadow-lg space-y-4 animate-slide-up" style="animation-delay: 0.1s;">
+                <h3 class="text-sm font-black text-blue-400 uppercase tracking-widest border-b border-white/[0.05] pb-3">Commodity Velocity Statement</h3>
+                <div class="flex gap-2">
+                    <input type="text" id="report-prod-code" placeholder="Enter Grain Code (e.g. 101)" class="w-full bg-pzdark border border-white/[0.08] text-white rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-blue-500/50">
+                    <button type="button" onclick="generateProductStatement()" class="bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase px-5 py-3 rounded-xl active:scale-95 transition-all shadow-md shrink-0">Run</button>
+                </div>
+                <div id="product-statement-output" class="mt-3 max-h-48 overflow-y-auto space-y-2 text-xs custom-scrollbar">
+                    <p class="text-slate-500 text-center py-6 font-bold uppercase tracking-wider">Awaiting commodity code query...</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- AR Aging Report Table -->
+        <div class="bg-pzpanel border border-white/[0.05] rounded-2xl overflow-hidden shadow-lg animate-slide-up" style="animation-delay: 0.2s;">
+            <div class="px-6 py-5 border-b border-white/[0.05] bg-white/[0.02]">
+                <h3 class="text-sm font-black text-white uppercase tracking-widest">Accounts Receivable (AR) Aging Report</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead class="text-[10px] text-slate-500 bg-pzdark uppercase tracking-widest font-black">
+                        <tr>
+                            <th class="p-4 pl-6">Customer Entity</th>
+                            <th class="p-4">Contact Number</th>
+                            <th class="p-4 text-right">0-30 Days</th>
+                            <th class="p-4 text-right">31-60 Days</th>
+                            <th class="p-4 text-right">61-90 Days</th>
+                            <th class="p-4 text-right text-rose-400">90+ Days</th>
+                            <th class="p-4 text-right pr-6">Total Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/[0.05]">
+                        {% for ar in ar_aging %}
+                        <tr class="hover:bg-white/[0.02] transition-colors">
+                            <td class="p-4 pl-6 font-extrabold text-white">{{ ar.name }}</td>
+                            <td class="p-4 font-mono text-xs text-slate-400">{{ ar.phone }}</td>
+                            <td class="p-4 text-right font-mono text-slate-300">₹{{ "{:,.2f}".format(ar['0_30']) }}</td>
+                            <td class="p-4 text-right font-mono text-amber-400">₹{{ "{:,.2f}".format(ar['31_60']) }}</td>
+                            <td class="p-4 text-right font-mono text-orange-400">₹{{ "{:,.2f}".format(ar['61_90']) }}</td>
+                            <td class="p-4 text-right font-mono font-black text-rose-400">₹{{ "{:,.2f}".format(ar['90_plus']) }}</td>
+                            <td class="p-4 text-right pr-6 font-mono font-black text-amber-400">₹{{ "{:,.2f}".format(ar.total) }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="p-8 text-center text-slate-500 text-xs font-bold uppercase tracking-widest">No accounts receivable aging records found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Profit & Loss (P&L) Statement Section -->
+        <div class="bg-pzpanel p-6 rounded-2xl border border-white/[0.05] shadow-lg space-y-6 animate-slide-up" style="animation-delay: 0.3s;">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-white/[0.05] pb-4 gap-3">
+                <div>
+                    <h3 class="text-sm font-black text-white uppercase tracking-widest">Executive Income Statement (P&L)</h3>
+                    <p class="text-xs font-medium text-slate-400 mt-1">Aggregated gross sales, cost of goods sold, and net operational profit</p>
+                </div>
+                <button type="button" onclick="downloadPNL()" class="bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:bg-right text-pzdark font-black text-xs uppercase tracking-widest px-5 py-3 rounded-xl shadow-[0_0_20px_rgba(245,158,11,0.2)] transition-all duration-300 active:scale-95 cursor-pointer border border-amber-300/30 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    Export P&L PDF
+                </button>
+            </div>
+
+            <div class="max-w-2xl mx-auto bg-pzdark p-6 sm:p-8 rounded-xl border border-white/[0.08] shadow-inner space-y-4" id="pnl-document-body">
+                <div class="text-center mb-6 border-b border-white/10 pb-4">
+                    <h1 class="text-xl font-black uppercase text-white tracking-widest">PZ Grain Enterprise</h1>
+                    <h2 class="text-xs font-bold uppercase mt-1 text-amber-500 tracking-wider">Official Income Statement</h2>
+                </div>
+                
+                <div class="space-y-4 text-xs sm:text-sm font-medium">
+                    <div class="flex justify-between items-center text-slate-300">
+                        <span>Gross Sales Revenue</span>
+                        <span class="font-mono font-bold text-white">₹{{ "{:,.2f}".format(orders|sum(attribute='total_amount')) }}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-rose-400">
+                        <span>Cost of Goods Sold (COGS)</span>
+                        <span class="font-mono font-bold">- ₹{{ "{:,.2f}".format(total_cogs) }}</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center font-black text-sm sm:text-base border-y border-white/10 py-3 bg-white/[0.02] px-3 text-white">
+                        <span class="uppercase tracking-wider">Gross Profit</span>
+                        <span class="font-mono text-amber-400">₹{{ "{:,.2f}".format( (orders|sum(attribute='total_amount')) - total_cogs ) }}</span>
+                    </div>
+
+                    {% set total_exp = expenses|sum(attribute='amount') %}
+                    {% set net_profit = (orders|sum(attribute='total_amount')) - total_cogs - total_exp %}
+                    
+                    <div class="flex justify-between items-center text-rose-400 pt-2">
+                        <span>Total Operational Expenses</span>
+                        <span class="font-mono font-bold">- ₹{{ "{:,.2f}".format(total_exp) }}</span>
+                    </div>
+
+                    <div class="flex justify-between items-center font-black text-base sm:text-lg border-y-2 border-white/20 py-3 mt-4 text-white">
+                        <span class="uppercase tracking-widest">Net Profit / (Loss)</span>
+                        <span class="font-mono {% if net_profit >= 0 %}text-emerald-400{% else %}text-rose-400{% endif %}">₹{{ "{:,.2f}".format(net_profit) }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

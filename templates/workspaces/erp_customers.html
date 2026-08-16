@@ -1,0 +1,59 @@
+<!-- WORKSPACE: ERP CUSTOMER DATABASE -->
+<div id="menu-workspace-erp-customers" class="flex-1 p-4 md:p-8 overflow-y-auto hidden workspace-pane bg-pzdark flex-col gap-6 custom-scrollbar animate-page-fade">
+    <div class="max-w-7xl mx-auto w-full space-y-6">
+        
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-white/[0.08] pb-4 gap-4">
+            <div>
+                <h2 class="text-2xl sm:text-3xl font-black text-white uppercase tracking-widest drop-shadow-md">Customer Database</h2>
+                <p class="text-xs font-medium text-slate-400 mt-1 tracking-wider">Master directory of registered buyers, contacts, and account profiles</p>
+            </div>
+            <button type="button" onclick="switchTabWorkspace('addcust')" class="bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:bg-right text-pzdark font-black text-xs uppercase tracking-widest px-5 py-3 rounded-xl shadow-[0_0_20px_rgba(245,158,11,0.2)] transition-all duration-300 active:scale-95 cursor-pointer flex items-center gap-2 border border-amber-300/30">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                Register New Client
+            </button>
+        </div>
+
+        <!-- Customer Directory Table -->
+        <div class="bg-pzpanel border border-white/[0.05] rounded-2xl overflow-hidden shadow-lg animate-slide-up">
+            <div class="px-6 py-5 border-b border-white/[0.05] bg-white/[0.02]">
+                <h3 class="text-sm font-black text-white uppercase tracking-widest">Client Directory Matrix</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead class="text-[10px] text-slate-500 bg-pzdark uppercase tracking-widest font-black">
+                        <tr>
+                            <th class="p-4 pl-6">Client Code</th>
+                            <th class="p-4">Full Name / Entity</th>
+                            <th class="p-4">Phone Contact</th>
+                            <th class="p-4">Email Address</th>
+                            {% if (session.get('role') or '').lower() in ['admin', 'owner'] %}
+                            <th class="p-4 text-right pr-6">Management</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/[0.05]">
+                        {% for c in customers %}
+                        <tr class="hover:bg-white/[0.02] transition-colors">
+                            <td class="p-4 pl-6 font-mono font-black text-amber-500">{{ c.code }}</td>
+                            <td class="p-4 font-extrabold text-white">{{ c.name }}</td>
+                            <td class="p-4 font-mono text-slate-400 text-xs">{{ c.phone }}</td>
+                            <td class="p-4 text-slate-400 text-xs">{{ c.email or 'N/A' }}</td>
+                            {% if (session.get('role') or '').lower() in ['admin', 'owner'] %}
+                            <td class="p-4 text-right pr-6">
+                                <button type="button" onclick="deleteCustomerProfile('{{ c.code }}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 px-3 py-1.5 rounded-lg font-black text-[10px] uppercase active:scale-95 transition-all">Delete</button>
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="p-8 text-center text-slate-500 text-xs font-bold uppercase tracking-widest">No customer accounts registered in the directory.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>

@@ -1,0 +1,74 @@
+<!-- WORKSPACE: PURGE DATABASE ROWS (DELETE ORDERS) -->
+<div id="menu-workspace-delete" class="flex-1 p-4 md:p-8 overflow-y-auto hidden workspace-pane bg-pzdark flex-col gap-6 custom-scrollbar animate-page-fade">
+    <div class="max-w-7xl mx-auto w-full space-y-6">
+        
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-white/[0.08] pb-4 gap-4">
+            <div>
+                <h2 class="text-2xl sm:text-3xl font-black text-rose-500 uppercase tracking-widest drop-shadow-md">Purge Database Rows</h2>
+                <p class="text-xs font-medium text-slate-400 mt-1 tracking-wider">Permanently delete single or multiple orders (restores inventory stock automatically).</p>
+            </div>
+            <button type="button" onclick="executeBulkOrderDeletion()" class="bg-gradient-to-r from-rose-600 via-rose-500 to-rose-700 hover:bg-right text-white font-black text-xs uppercase tracking-widest px-5 py-3 rounded-xl shadow-[0_0_20px_rgba(225,29,72,0.3)] transition-all duration-300 active:scale-95 flex items-center gap-2 border border-rose-400/30">
+                🗑️ Delete Selected
+            </button>
+        </div>
+
+        <!-- Matrix Table -->
+        <div class="bg-pzpanel border border-rose-500/20 rounded-2xl overflow-hidden shadow-lg animate-slide-up">
+            <div class="px-6 py-4 border-b border-rose-500/20 bg-rose-500/5 flex justify-between items-center gap-4">
+                <h3 class="text-sm font-black text-rose-400 uppercase tracking-widest hidden sm:block">Order Deletion Registry</h3>
+                <!-- Search box updated to include Phone -->
+                <input type="text" id="purge-search-input" oninput="filterPurgeTable()" placeholder="🔍 Search Invoice, Name, or Phone..." class="w-full sm:w-72 bg-pzdark border border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-white outline-none focus:border-rose-500 transition-colors">
+            </div>
+            
+            <div class="overflow-x-auto max-h-[60vh] custom-scrollbar relative">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead class="text-[10px] text-slate-400 bg-pzdark uppercase tracking-widest font-black sticky top-0 z-10 shadow-md">
+                        <tr>
+                            <th class="p-4 pl-6 w-10">
+                                <input type="checkbox" onchange="toggleAllPurgeCheckboxes(this)" class="w-4 h-4 accent-rose-500 cursor-pointer rounded border-white/10 bg-pzdark">
+                            </th>
+                            <th class="p-4 whitespace-nowrap">Invoice ID</th>
+                            <th class="p-4 whitespace-nowrap">Customer</th>
+                            <th class="p-4 whitespace-nowrap">Phone Number</th>
+                            <th class="p-4">Address</th>
+                            <th class="p-4 whitespace-nowrap">Type</th>
+                            <th class="p-4 text-right pr-6 whitespace-nowrap">Total (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="purge-table-body" class="divide-y divide-white/[0.05]">
+                        {% for o in orders %}
+                        <tr class="hover:bg-rose-500/5 transition-colors purge-row">
+                            <td class="p-4 pl-6 align-top pt-5">
+                                <input type="checkbox" value="{{ o.id }}" class="purge-checkbox w-4 h-4 accent-rose-500 cursor-pointer rounded border-white/10 bg-pzdark">
+                            </td>
+                            <td class="p-4 font-mono font-black text-rose-400 purge-invoice whitespace-nowrap align-top pt-5">{{ o.invoice_no }}</td>
+                            <td class="p-4 font-bold text-white purge-name whitespace-nowrap align-top pt-5">{{ o.customer_name }}</td>
+                            
+                            <!-- New Phone Column -->
+                            <td class="p-4 font-mono text-slate-400 purge-phone whitespace-nowrap align-top pt-5">{{ o.customer_phone or 'N/A' }}</td>
+                            
+                            <!-- New Address Column (Truncated with hover to see full) -->
+                            <td class="p-4 text-[11px] text-slate-500 max-w-[200px] truncate align-top pt-5" title="{{ o.customer_address }}">{{ o.customer_address or 'N/A' }}</td>
+                            
+                            <td class="p-4 align-top pt-5">
+                                {% if o.customer_code == 'WALKIN' %}
+                                    <span class="px-2 py-1 rounded text-[9px] uppercase font-black border border-slate-500/20 bg-slate-500/10 text-slate-400 whitespace-nowrap">Walk-in</span>
+                                {% else %}
+                                    <span class="px-2 py-1 rounded text-[9px] uppercase font-black border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 whitespace-nowrap">Regular</span>
+                                {% endif %}
+                            </td>
+                            <td class="p-4 font-mono font-black text-white text-right pr-6 align-top pt-5 whitespace-nowrap">₹{{ "{:,.2f}".format(o.total_amount) }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="p-8 text-center text-xs font-bold text-slate-500">No orders available to purge.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+    </div>
+</div>

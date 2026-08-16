@@ -1,0 +1,143 @@
+<!-- WORKSPACE 2: INBOUND PURCHASE & LAB -->
+<div id="menu-workspace-purchase" class="flex-1 overflow-y-auto hidden workspace-pane bg-pzdark print:hidden flex-col lg:flex-row custom-scrollbar">
+    <div class="w-full lg:w-2/3 p-3 md:p-4 flex flex-col gap-4 lg:overflow-y-auto custom-scrollbar">
+        
+        <!-- Seller Profile Section -->
+        <div class="bg-pzpanel p-4 sm:p-5 rounded-xl border-2 border-white/[0.06] shadow-md space-y-3 relative z-10">
+            <div class="flex flex-col md:flex-row md:items-center justify-between border-b-2 border-white/5 pb-2 gap-2">
+                <h3 class="text-xs sm:text-sm font-black text-amber-500 uppercase tracking-widest">Seller Profile</h3>
+                <div class="flex items-center gap-2 w-full md:w-auto">
+                    <div class="relative w-full md:w-64 z-30">
+                        <input type="text" id="pur-cust-search" oninput="runLiveBarSearch(this.value, 'pur')" placeholder="🔍 Search Name/Code..." class="bg-[#1b2020] border-2 border-white/[0.08] rounded-lg px-2 sm:px-3 py-1.5 text-xs font-bold outline-none w-full focus:bg-[#1b2020] focus:border-amber-500 transition shadow-inner h-9 text-white">
+                        <div id="pur-search-dropdown" class="absolute left-0 right-0 top-full mt-1 bg-pzpanel border-2 border-white/[0.06] rounded-xl shadow-2xl max-h-56 overflow-y-auto hidden divide-y divide-white/5 z-[100] custom-scrollbar"></div>
+                    </div>
+                    <!-- New Button -->
+                    <button type="button" onclick="setNewSupplier()" class="bg-slate-700 hover:bg-slate-600 text-white font-black text-[10px] uppercase px-3 py-1.5 rounded-lg cursor-pointer transition-colors shadow-sm active:scale-95 shrink-0 h-9">➕ New</button>
+                    <!-- Save Button -->
+                    <button type="button" id="pur-save-btn" onclick="saveSupplierProfileInformation()" class="bg-amber-500 hover:bg-amber-400 text-pzdark font-black text-[10px] uppercase px-4 py-1.5 rounded-lg cursor-pointer transition-colors shadow-lg active:scale-95 border border-transparent shrink-0 h-9">💾 Save</button>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+                <!-- Row 1: Code, Name, Phone -->
+                <div>
+                    <label class="block text-[9px] sm:text-[10px] font-extrabold text-slate-400 uppercase mb-0.5">Code</label>
+                    <input type="text" id="pur-seller-code" placeholder="Auto" readonly class="w-full bg-[#1b2020] border-2 border-white/[0.08] rounded-lg px-2 py-1 text-xs font-mono font-black text-amber-500 text-center outline-none h-8">
+                </div>
+                <div class="sm:col-span-2 lg:col-span-2">
+                    <label class="block text-[9px] sm:text-[10px] font-extrabold text-slate-400 uppercase mb-0.5">Name / Firm</label>
+                    <input type="text" id="pur-seller-name" placeholder="Balaji Grains" class="w-full bg-[#1b2020] border-2 border-white/[0.08] rounded-lg px-2 py-1 text-xs font-bold text-white outline-none focus:border-amber-500 transition-colors h-8">
+                </div>
+                <div>
+                    <label class="block text-[9px] sm:text-[10px] font-extrabold text-slate-400 uppercase mb-0.5">Contact</label>
+                    <input type="text" id="pur-seller-phone" placeholder="+91..." class="w-full bg-[#1b2020] border-2 border-white/[0.08] rounded-lg px-2 py-1 text-xs font-mono font-bold text-white outline-none focus:border-amber-500 transition-colors h-8">
+                </div>
+
+                <!-- Row 2: 5-Part Address Block -->
+                <div class="col-span-1 sm:col-span-2 lg:col-span-4 grid grid-cols-2 md:grid-cols-5 gap-2 border-t-2 border-white/5 pt-2 mt-1">
+                    <div class="col-span-2 md:col-span-1">
+                        <label class="block text-[9px] sm:text-[10px] font-extrabold text-slate-400 uppercase mb-0.5">Apt / Society</label>
+                        <input type="text" id="pur-seller-apt" placeholder="Shop No. 5" class="w-full bg-[#1b2020] border-2 border-white/[0.08] rounded-lg px-2 py-1 text-xs font-bold text-white outline-none focus:border-amber-500 h-8">
+                    </div>
+                    <div class="col-span-2 md:col-span-1">
+                        <label class="block text-[9px] sm:text-[10px] font-extrabold text-slate-400 uppercase mb-0.5">Area</label>
+                        <input type="text" id="pur-seller-area" placeholder="Navrangpura" oninput="autoFillLocation('pur-seller')" class="w-full bg-[#1b2020] border-2 border-white/[0.08] rounded-lg px-2 py-1 text-xs font-bold text-white outline-none focus:border-amber-500 h-8">
+                    </div>
+                    <div>
+                        <label class="block text-[9px] sm:text-[10px] font-extrabold text-slate-400 uppercase mb-0.5">City</label>
+                        <input type="text" id="pur-seller-city" placeholder="Ahmedabad" class="w-full bg-[#1b2020] border-2 border-white/[0.08] rounded-lg px-2 py-1 text-xs font-bold text-white outline-none focus:border-amber-500 h-8">
+                    </div>
+                    <div>
+                        <label class="block text-[9px] sm:text-[10px] font-extrabold text-slate-400 uppercase mb-0.5">State</label>
+                        <input type="text" id="pur-seller-state" placeholder="GJ" class="w-full bg-[#1b2020] border-2 border-white/[0.08] rounded-lg px-2 py-1 text-xs font-bold text-white outline-none focus:border-amber-500 h-8">
+                    </div>
+                    <div>
+                        <label class="block text-[9px] sm:text-[10px] font-extrabold text-slate-400 uppercase mb-0.5">Zipcode</label>
+                        <input type="text" id="pur-seller-zipcode" placeholder="380009" class="w-full bg-[#1b2020] border-2 border-white/[0.08] rounded-lg px-2 py-1 text-xs font-bold text-white outline-none focus:border-amber-500 h-8">
+                    </div>
+                </div>
+
+                <!-- Row 3: Broker -->
+                <div class="col-span-1 sm:col-span-2 lg:col-span-4 mt-1">
+                    <label class="block text-[9px] sm:text-[10px] font-extrabold text-indigo-400 uppercase mb-0.5">Broker / Agent (Optional)</label>
+                    <input type="text" id="pur-broker-name" placeholder="Enter Broker Name..." class="w-full bg-[#1b2020] border-2 border-indigo-500/30 rounded-lg px-2 py-1 text-xs font-bold text-white outline-none focus:border-indigo-500 transition-colors h-8">
+                </div>
+            </div>
+        </div>
+
+        <!-- GRAIN QUALITY TESTING & BIN MANAGEMENT -->
+        <div class="bg-pzpanel p-4 sm:p-5 rounded-xl border-2 border-white/[0.06] shadow-md space-y-3 z-0">
+            <h3 class="text-[11px] sm:text-xs font-black text-white uppercase tracking-widest border-b-2 border-white/5 pb-2">Lab Quality Grading & Receiving</h3>
+            
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-3 bg-[#1b2020] p-3 rounded-lg border border-white/5 mb-3">
+                <div>
+                    <label class="block text-[10px] font-extrabold text-blue-400 uppercase mb-1">Lot/Batch ID</label>
+                    <input type="text" id="pur-batch-id" placeholder="B-2026-X" class="w-full bg-pzdark border-2 border-white/10 rounded-lg p-1.5 text-xs font-mono font-bold outline-none h-9 text-white">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-extrabold text-emerald-400 uppercase mb-1">Dest. Silo/Bin</label>
+                    <select id="pur-bin-id" class="w-full bg-pzdark border-2 border-white/10 rounded-lg p-1.5 text-xs font-bold outline-none cursor-pointer h-9 text-white">
+                        <option value="Silo 1">Silo 1</option>
+                        <option value="Silo 2">Silo 2</option>
+                        <option value="Whse A">Warehouse A</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-extrabold text-rose-400 uppercase mb-1">Moisture %</label>
+                    <input type="number" id="pur-moisture" value="12.5" step="0.1" max="25" class="w-full bg-pzdark border-2 border-rose-900/50 rounded-lg p-1.5 text-xs font-black outline-none h-9 text-center text-rose-400">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-extrabold text-rose-400 uppercase mb-1">Foreign Mat. %</label>
+                    <input type="number" id="pur-fm" value="1.2" step="0.1" class="w-full bg-pzdark border-2 border-rose-900/50 rounded-lg p-1.5 text-xs font-black outline-none h-9 text-center text-rose-400">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-extrabold text-rose-400 uppercase mb-1">Damage %</label>
+                    <input type="number" id="pur-damage" value="0.5" step="0.1" class="w-full bg-pzdark border-2 border-rose-900/50 rounded-lg p-1.5 text-xs font-black outline-none h-9 text-center text-rose-400">
+                </div>
+            </div>
+
+            <div class="flex flex-col md:flex-row items-start gap-3 sm:gap-4">
+                <div class="w-full md:w-1/4">
+                    <label class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">Code</label>
+                    <input type="text" id="pur-terminal-code" placeholder="e.g., 102" maxlength="3" oninput="checkGrainCode(this.value, 'purchase')" class="w-full bg-[#1b2020] border-2 border-white/[0.08] rounded-lg p-2.5 font-mono text-lg font-black text-center shadow-inner focus:border-amber-500 transition-all outline-none text-white h-12">
+                </div>
+                <div class="w-full md:flex-1">
+                    <label class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">Match Preview</label>
+                    <div id="pur-item-preview-box" class="h-12 flex items-center bg-[#1b2020] border-2 border-dashed border-white/[0.08] rounded-lg px-3 text-xs font-bold text-slate-400 transition-colors">Waiting for code...</div>
+                </div>
+                <div class="w-full md:w-[25%]">
+                    <label class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">Weight (kg)</label>
+                    <div class="flex gap-1">
+                        <input type="number" id="pur-terminal-qty" value="1000" min="1" disabled class="w-full bg-pzdark border-2 border-white/[0.04] rounded-lg p-2.5 text-lg font-black text-center text-slate-500 outline-none h-12">
+                        <button type="button" onclick="connectHardwareScale('pur-terminal-qty')" title="Fetch Weight from Digital Scale" class="bg-amber-500 text-pzdark px-3 rounded-lg hover:bg-amber-400 active:scale-95 transition-all h-12 border-2 border-transparent flex items-center justify-center text-lg">⚖️</button>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-end pt-1">
+                <button type="button" id="pur-add-to-manifest-btn" onclick="processTerminalEntry('purchase')" disabled class="w-full md:w-auto bg-[#1b2020] text-slate-500 font-black py-2 px-6 rounded-lg text-xs uppercase cursor-not-allowed shadow-md transition-all border-2 border-white/[0.06] h-10">Add to Receiving List</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT SIDEBAR: INBOUND MANIFEST -->
+    <div class="w-full lg:w-1/3 bg-pzpanel border-t-4 lg:border-t-0 lg:border-l-4 border-white/[0.06] shadow-2xl flex flex-col relative z-10 shrink-0 lg:h-full lg:overflow-hidden min-h-[500px] lg:min-h-0">
+        <div class="flex flex-col flex-1 min-h-0 overflow-hidden">
+            <div class="p-3 sm:p-4 pb-2 shrink-0 border-b-2 border-white/5 mx-3 sm:mx-4 mt-3">
+                <h2 class="text-sm font-black text-white uppercase tracking-widest">Inbound Manifest</h2>
+            </div>
+            <div id="purchase-manifest-container" class="flex-1 overflow-y-auto px-3 sm:px-4 py-2 space-y-2 min-h-[80px] custom-scrollbar">
+                <p class="text-xs text-slate-500 text-center py-10 font-bold tracking-wide">No inbound entries loaded</p>
+            </div>
+        </div>
+        
+        <div class="shrink-0 flex flex-col bg-pzdark border-t-2 border-white/5">
+            <div class="p-3 sm:p-4 pt-3">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Total Invoice Cost</span>
+                    <span id="purchase-total-price" class="text-2xl font-black text-amber-500 tracking-tight">₹0.00</span>
+                </div>
+                <button type="button" onclick="submitSupplierPurchaseEntry()" class="w-full bg-amber-500 hover:bg-amber-400 text-pzdark font-black py-3 px-4 rounded-xl text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all h-12 border border-transparent">Commit & Generate GRN</button>
+            </div>
+        </div>
+    </div>
+</div>
